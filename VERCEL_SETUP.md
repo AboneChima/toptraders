@@ -43,7 +43,8 @@ You should see: `{"message":"Database initialized successfully"}`
 
 ✅ Frontend deployed on Vercel (using localStorage)
 ✅ API routes created
-⏳ Need to add Vercel Postgres database
+✅ Vercel Postgres database added
+⏳ Need to initialize database tables
 ⏳ Need to update frontend to use API instead of localStorage
 
 ## Next Steps
