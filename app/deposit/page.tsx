@@ -133,25 +133,52 @@ export default function DepositPage() {
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden"
                       >
-                        <div className="mt-3 p-4 bg-white/5 rounded-xl border border-white/10">
-                          <p className="text-xs text-gray-400 mb-2">Wallet Address:</p>
-                          <div className="flex items-center gap-2 mb-3">
-                            <code className="flex-1 text-xs text-white bg-black/50 p-3 rounded-lg break-all">
-                              {address}
-                            </code>
-                            <button
-                              onClick={() => handleCopyAddress(address)}
-                              className="p-3 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
-                            >
-                              {copiedAddress ? (
-                                <Check className="w-4 h-4 text-green-400" />
-                              ) : (
-                                <Copy className="w-4 h-4 text-white" />
-                              )}
-                            </button>
+                        <div className="mt-3 p-4 bg-white/5 rounded-xl border border-white/10 space-y-4">
+                          <div>
+                            <p className="text-xs text-gray-400 mb-2">Wallet Address:</p>
+                            <div className="flex items-center gap-2 mb-3">
+                              <code className="flex-1 text-xs text-white bg-black/50 p-3 rounded-lg break-all">
+                                {address}
+                              </code>
+                              <button
+                                onClick={() => handleCopyAddress(address)}
+                                className="p-3 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                              >
+                                {copiedAddress ? (
+                                  <Check className="w-4 h-4 text-green-400" />
+                                ) : (
+                                  <Copy className="w-4 h-4 text-white" />
+                                )}
+                              </button>
+                            </div>
+                            {copiedAddress && (
+                              <p className="text-xs text-green-400 mb-2">✓ Address copied to clipboard</p>
+                            )}
                           </div>
-                          {copiedAddress && (
-                            <p className="text-xs text-green-400 mb-2">✓ Address copied to clipboard</p>
+
+                          {/* Amount Input - Always visible but disabled until copied */}
+                          <div>
+                            <label className="text-sm text-gray-400 mb-2 block">Enter Deposit Amount (USD)</label>
+                            <input
+                              type="number"
+                              value={amount}
+                              onChange={(e) => setAmount(e.target.value)}
+                              placeholder="Enter amount"
+                              disabled={!copiedAddress}
+                              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 outline-none focus:border-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                            />
+                            <p className="text-xs text-gray-400 mt-2">
+                              {copiedAddress ? 'Minimum deposit: $10' : 'Copy the address above to continue'}
+                            </p>
+                          </div>
+
+                          {copiedAddress && amount && parseFloat(amount) >= 10 && (
+                            <button
+                              onClick={() => setShowConfirmModal(true)}
+                              className="w-full py-3 bg-white text-black rounded-xl font-semibold hover:bg-gray-200 transition-colors"
+                            >
+                              Continue to Confirm
+                            </button>
                           )}
                         </div>
                       </motion.div>
@@ -162,38 +189,7 @@ export default function DepositPage() {
             </div>
           </motion.div>
 
-          {/* Amount Input */}
-          {selectedCoin && copiedAddress && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6"
-              style={{ boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)' }}
-            >
-              <h2 className="text-lg font-semibold text-white mb-4">Enter Deposit Amount</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-gray-400 mb-2 block">Amount (USD)</label>
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="Enter amount"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 outline-none focus:border-white/30"
-                  />
-                  <p className="text-xs text-gray-400 mt-2">Minimum deposit: $10</p>
-                </div>
 
-                <button
-                  onClick={() => setShowConfirmModal(true)}
-                  disabled={!amount || parseFloat(amount) < 10}
-                  className="w-full py-3 bg-white text-black rounded-xl font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Continue to Confirm
-                </button>
-              </div>
-            </motion.div>
-          )}
         </div>
 
         {/* Confirmation Modal */}

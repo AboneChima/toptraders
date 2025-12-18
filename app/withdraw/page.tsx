@@ -150,12 +150,13 @@ export default function WithdrawPage() {
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-white/30"
+                  style={{ color: 'white' }}
                 >
-                  <option value="USDT (TRC20)">USDT (TRC20)</option>
-                  <option value="BTC">Bitcoin (BTC)</option>
-                  <option value="ETH">Ethereum (ETH)</option>
-                  <option value="BNB">Binance Coin (BNB)</option>
-                  <option value="USDT (ERC20)">USDT (ERC20)</option>
+                  <option value="USDT (TRC20)" style={{ backgroundColor: '#1f2937', color: 'white' }}>USDT (TRC20)</option>
+                  <option value="BTC" style={{ backgroundColor: '#1f2937', color: 'white' }}>Bitcoin (BTC)</option>
+                  <option value="ETH" style={{ backgroundColor: '#1f2937', color: 'white' }}>Ethereum (ETH)</option>
+                  <option value="BNB" style={{ backgroundColor: '#1f2937', color: 'white' }}>Binance Coin (BNB)</option>
+                  <option value="USDT (ERC20)" style={{ backgroundColor: '#1f2937', color: 'white' }}>USDT (ERC20)</option>
                 </select>
               </div>
 
