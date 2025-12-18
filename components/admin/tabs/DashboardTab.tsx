@@ -22,12 +22,17 @@ export default function DashboardTab() {
 
   const loadData = async () => {
     try {
+      console.log('Loading dashboard data...');
       // Load all data
       const [usersResult, depositsResult, withdrawalsResult] = await Promise.all([
         api.getUsers(),
         api.getDeposits(),
         api.getWithdrawals(),
       ]);
+
+      console.log('Users:', usersResult);
+      console.log('Deposits:', depositsResult);
+      console.log('Withdrawals:', withdrawalsResult);
 
       // Calculate stats
       const totalPayments = depositsResult.deposits
@@ -38,6 +43,8 @@ export default function DashboardTab() {
       const activeUsers = usersResult.users?.filter((u: any) => u.status === 'active').length || 0;
       const pendingWithdrawals = withdrawalsResult.withdrawals?.filter((w: any) => w.status === 'pending').length || 0;
       const pendingDeposits = depositsResult.deposits?.filter((d: any) => d.status === 'pending').length || 0;
+
+      console.log('Stats:', { totalPayments, totalUsers, pendingWithdrawals, pendingDeposits });
 
       setStats({
         totalPayments,
@@ -54,6 +61,7 @@ export default function DashboardTab() {
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 5);
       
+      console.log('Recent activity:', combined);
       setRecentActivity(combined);
     } catch (error) {
       console.error('Load dashboard data error:', error);

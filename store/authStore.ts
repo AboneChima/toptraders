@@ -167,10 +167,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 }));
 
-// Initialize from localStorage on load
+// Initialize from localStorage on load and refresh balance from database
 if (typeof window !== 'undefined') {
   const auth = getAuth();
   if (auth.user && auth.isAuthenticated) {
     useAuthStore.setState({ user: auth.user, isAuthenticated: auth.isAuthenticated });
+    
+    // Refresh balance from database
+    fetch('/api/users')
+      .then(res => res.json())
+      .then(data => {
+        if (data.users) {
+          const currentUser = data.users.find((u: any) => u.id.toString() === auth.user?.id.toString());
+          if (currentUser) {
+            const updatedUser = { ...auth.user, balance: currentUser.balance };
+            useAuthStore.setState({ user: updatedUser });
+            saveAuth(updatedUser, true);
+          }
+        }
+      })
+      .catch(err => console.log('Failed to refresh balance:', err));
   }
 }
