@@ -1,62 +1,63 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAdminStore } from '@/store/adminStore';
-import { useAuthStore } from '@/store/authStore';
 import { api } from '@/lib/api';
 import { DollarSign, Users, TrendingUp, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 
 export default function DashboardTab() {
-  const { withdrawals, deposits } = useAdminStore();
-  
-  const [allUsers, setAllUsers] = useState<Array<{
-    id: string;
-    name: string;
-    email: string;
-    balance: number;
-    status: 'active' | 'inactive';
-    createdAt: string;
-  }>>([]);
+  const [stats, setStats] = useState({
+    totalPayments: 0,
+    totalUsers: 0,
+    pendingWithdrawals: 0,
+    pendingDeposits: 0,
+    activeUsers: 0,
+  });
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
   useEffect(() => {
-    // Load users from API or localStorage
-    const loadUsers = async () => {
-      try {
-        // Try API first
-        const result = await api.getUsers();
-        if (result.users) {
-          setAllUsers(result.users);
-          return;
-        }
-      } catch (error) {
-        console.log('API not available, using localStorage');
-      }
-      
-      // Fallback to localStorage
-      try {
-        const { getAllUsers } = useAuthStore.getState();
-        const users = getAllUsers();
-        setAllUsers(users);
-      } catch (error) {
-        console.error('Error loading users:', error);
-      }
-    };
-
-    loadUsers();
-
-    // Reload users every 5 seconds
-    const interval = setInterval(loadUsers, 5000);
+    loadData();
+    const interval = setInterval(loadData, 3000);
     return () => clearInterval(interval);
   }, []);
 
-  const stats = {
-    totalPayments: deposits
-      .filter(d => d.status === 'confirmed')
-      .reduce((sum, d) => sum + d.amount, 0),
-    totalUsers: allUsers.length,
-    pendingWithdrawals: withdrawals.filter(w => w.status === 'pending').length,
-    pendingDeposits: deposits.filter(d => d.status === 'pending').length,
-    activeUsers: allUsers.filter(u => u.status === 'active').length,
+  const loadData = async () => {
+    try {
+      // Load all data
+      const [usersResult, depositsResult, withdrawalsResult] = await Promise.all([
+        api.getUsers(),
+        api.getDeposits(),
+        api.getWithdrawals(),
+      ]);
+
+      // Calculate stats
+      const totalPayments = depositsResult.deposits
+        ?.filter((d: any) => d.status === 'confirmed')
+        .reduce((sum: number, d: any) => sum + d.amount, 0) || 0;
+
+      const totalUsers = usersResult.users?.length || 0;
+      const activeUsers = usersResult.users?.filter((u: any) => u.status === 'active').length || 0;
+      const pendingWithdrawals = withdrawalsResult.withdrawals?.filter((w: any) => w.status === 'pending').length || 0;
+      const pendingDeposits = depositsResult.deposits?.filter((d: any) => d.status === 'pending').length || 0;
+
+      setStats({
+        totalPayments,
+        totalUsers,
+        pendingWithdrawals,
+        pendingDeposits,
+        activeUsers,
+      });
+
+      // Combine recent activity
+      const deposits = depositsResult.deposits?.map((d: any) => ({ ...d, type: 'deposit' })) || [];
+      const withdrawals = withdrawalsResult.withdrawals?.map((w: any) => ({ ...w, type: 'withdrawal' })) || [];
+      const combined = [...deposits, ...withdrawals]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 5);
+      
+      setRecentActivity(combined);
+    } catch (error) {
+      console.error('Load dashboard data error:', error);
+    }
   };
 
   return (
@@ -117,30 +118,6 @@ export default function DashboardTab() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div>
-        <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { icon: Users, label: 'Manage Users', color: 'bg-blue-500/20 text-blue-400' },
-            { icon: ArrowUpRight, label: 'Withdrawals', color: 'bg-orange-500/20 text-orange-400' },
-            { icon: ArrowDownLeft, label: 'Deposits', color: 'bg-green-500/20 text-green-400' },
-            { icon: DollarSign, label: 'Currency Pairs', color: 'bg-purple-500/20 text-purple-400' },
-          ].map((action) => (
-            <div
-              key={action.label}
-              className="rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6 hover:bg-white/10 transition-all cursor-pointer"
-              style={{ boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)' }}
-            >
-              <div className={`w-12 h-12 ${action.color} rounded-xl flex items-center justify-center mb-3`}>
-                <action.icon className="w-6 h-6" />
-              </div>
-              <p className="text-sm font-medium text-white">{action.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Recent Activity */}
       <div
         className="rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6"
@@ -148,30 +125,36 @@ export default function DashboardTab() {
       >
         <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
         <div className="space-y-3">
-          {withdrawals.slice(0, 5).map((w) => (
-            <div key={w.id} className="flex items-center justify-between py-3 border-b border-white/10 last:border-0">
+          {recentActivity.map((activity) => (
+            <div key={`${activity.type}-${activity.id}`} className="flex items-center justify-between py-3 border-b border-white/10 last:border-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-orange-500/20 rounded-xl flex items-center justify-center">
-                  <ArrowUpRight className="w-5 h-5 text-orange-400" />
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  activity.type === 'deposit' ? 'bg-green-500/20' : 'bg-orange-500/20'
+                }`}>
+                  {activity.type === 'deposit' ? (
+                    <ArrowDownLeft className="w-5 h-5 text-green-400" />
+                  ) : (
+                    <ArrowUpRight className="w-5 h-5 text-orange-400" />
+                  )}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-white">{w.userName}</p>
-                  <p className="text-xs text-gray-400">Withdrawal Request</p>
+                  <p className="text-sm font-medium text-white">{activity.userName}</p>
+                  <p className="text-xs text-gray-400 capitalize">{activity.type} Request</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-semibold text-white">${w.amount}</p>
+                <p className="text-sm font-semibold text-white">${activity.amount.toFixed(2)}</p>
                 <span className={`text-xs px-2 py-1 rounded-full ${
-                  w.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                  w.status === 'approved' ? 'bg-green-500/20 text-green-400' :
+                  activity.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                  (activity.status === 'confirmed' || activity.status === 'approved') ? 'bg-green-500/20 text-green-400' :
                   'bg-red-500/20 text-red-400'
                 }`}>
-                  {w.status}
+                  {activity.status}
                 </span>
               </div>
             </div>
           ))}
-          {withdrawals.length === 0 && (
+          {recentActivity.length === 0 && (
             <p className="text-center text-gray-500 py-8 text-sm">No recent activity</p>
           )}
         </div>

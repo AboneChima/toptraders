@@ -16,6 +16,7 @@ export default function UsersTab() {
   const [selectedUser, setSelectedUser] = useState<{ id: string; name: string; email: string; balance: number; status: 'active' | 'inactive' } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [mounted, setMounted] = useState(false);
+  const [customAmount, setCustomAmount] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -113,9 +114,40 @@ export default function UsersTab() {
 
         setShowFundModal(false);
         setSelectedUser(null);
+        setCustomAmount('');
       } catch (error) {
         console.error('Fund user error:', error);
         alert('Failed to fund user');
+      }
+    }
+  };
+
+  const handleLoginAsUser = async (user: any) => {
+    if (confirm(`Login as ${user.name}? This will log you out of admin.`)) {
+      try {
+        // Set the user in auth store
+        const authUser = {
+          id: user.id.toString(),
+          name: user.name,
+          email: user.email,
+          password: '',
+          balance: user.balance,
+          status: user.status,
+          createdAt: user.createdAt,
+        };
+        
+        useAuthStore.getState().user = authUser;
+        useAuthStore.getState().isAuthenticated = true;
+        localStorage.setItem('toptrades-auth', JSON.stringify({ user: authUser, isAuthenticated: true }));
+        
+        // Logout from admin
+        useAdminStore.getState().logout();
+        
+        // Redirect to home
+        window.location.href = '/';
+      } catch (error) {
+        console.error('Login as user error:', error);
+        alert('Failed to login as user');
       }
     }
   };
@@ -187,18 +219,30 @@ export default function UsersTab() {
                           setShowFundModal(true);
                         }}
                         className="p-2 text-green-400 hover:bg-green-500/10 rounded-lg"
+                        title="Fund User"
                       >
                         <DollarSign className="w-4 h-4" />
                       </button>
                       <button
+                        onClick={() => handleLoginAsUser(user)}
+                        className="p-2 text-purple-400 hover:bg-purple-500/10 rounded-lg"
+                        title="Login as User"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                        </svg>
+                      </button>
+                      <button
                         onClick={() => openEditModal(user)}
                         className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg"
+                        title="Edit User"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => deleteUser(user.id)}
                         className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg"
+                        title="Delete User"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -289,6 +333,26 @@ export default function UsersTab() {
                 <p className="text-sm text-gray-400 mb-1">User: {selectedUser.name}</p>
                 <p className="text-sm text-gray-400">Current Balance: ${(Number(selectedUser.balance) || 0).toFixed(2)}</p>
               </div>
+              
+              <div className="mb-4">
+                <label className="text-sm text-gray-400 mb-2 block">Custom Amount</label>
+                <input
+                  type="number"
+                  value={customAmount}
+                  onChange={(e) => setCustomAmount(e.target.value)}
+                  placeholder="Enter custom amount"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 outline-none focus:border-white/30"
+                />
+                {customAmount && parseFloat(customAmount) > 0 && (
+                  <button
+                    onClick={() => handleFundUser(parseFloat(customAmount))}
+                    className="w-full mt-2 py-3 bg-green-500 text-white rounded-xl font-semibold hover:bg-green-600 transition-colors"
+                  >
+                    Add ${parseFloat(customAmount).toFixed(2)}
+                  </button>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 {[100, 500, 1000, 5000].map((amount) => (
                   <button

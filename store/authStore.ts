@@ -155,7 +155,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     saveUsers(updatedUsers);
     
     const state = get();
-    if (state.user?.id === userId) {
+    if (state.user?.id.toString() === userId.toString()) {
       const updatedUser = { ...state.user, balance };
       set({ user: updatedUser });
       saveAuth(updatedUser, true);

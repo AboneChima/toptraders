@@ -27,7 +27,7 @@ export default function TradePanel() {
   const [notificationType, setNotificationType] = useState<'success' | 'error' | 'info'>('info');
 
   const { user, updateUserBalance } = useAuthStore();
-  const [userBalance, setUserBalance] = useState(user?.balance || 0);
+  const [userBalance, setUserBalance] = useState(0);
 
   useEffect(() => {
     if (user) {
@@ -41,12 +41,17 @@ export default function TradePanel() {
   const loadBalance = async () => {
     if (!user) return;
     try {
+      console.log('Loading balance for user:', user.id);
       const result = await api.getUsers();
       if (result.users) {
+        console.log('All users:', result.users);
         const currentUser = result.users.find((u: any) => u.id.toString() === user.id.toString());
         if (currentUser) {
+          console.log('Found user with balance:', currentUser.balance);
           setUserBalance(currentUser.balance);
           updateUserBalance(user.id, currentUser.balance);
+        } else {
+          console.log('User not found. Looking for:', user.id);
         }
       }
     } catch (error) {
