@@ -220,7 +220,8 @@ export const useAdminStore = create<AdminState>()(
           if (withdrawal && status === 'approved') {
             // Update user balance in authStore
             const authStore = useAuthStore.getState();
-            const user = authStore.allUsers.find(u => u.id === withdrawal.userId);
+            const users = authStore.getAllUsers();
+            const user = users.find(u => u.id === withdrawal.userId);
             if (user) {
               authStore.updateUserBalance(withdrawal.userId, (user.balance || 0) - withdrawal.amount);
             }
