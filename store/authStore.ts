@@ -13,9 +13,9 @@ interface User {
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => boolean;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  registerUser: (user: Omit<User, 'id' | 'balance' | 'status' | 'createdAt'>) => boolean;
+  registerUser: (user: Omit<User, 'id' | 'balance' | 'status' | 'createdAt'>) => Promise<boolean>;
   updateUserBalance: (userId: string, balance: number) => void;
   getAllUsers: () => User[];
 }
@@ -50,7 +50,35 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isAuthenticated: false,
   
-  login: (email: string, password: string) => {
+  login: async (email: string, password: string) => {
+    // Try API login first
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        const { user } = await response.json();
+        const authUser = {
+          id: user.id.toString(),
+          name: user.name,
+          email: user.email,
+          password: '', // Don't store password
+          balance: user.balance,
+          status: user.status as 'active' | 'inactive',
+          createdAt: user.createdAt,
+        };
+        set({ user: authUser, isAuthenticated: true });
+        saveAuth(authUser, true);
+        return true;
+      }
+    } catch (error) {
+      console.log('API login failed, trying localStorage');
+    }
+
+    // Fallback to localStorage
     const users = getUsers();
     const user = users.find(u => u.email === email && u.password === password);
     
@@ -67,7 +95,35 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     saveAuth(null, false);
   },
   
-  registerUser: (userData) => {
+  registerUser: async (userData) => {
+    // Try API registration first
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      });
+
+      if (response.ok) {
+        const { user } = await response.json();
+        const authUser = {
+          id: user.id.toString(),
+          name: user.name,
+          email: user.email,
+          password: '', // Don't store password
+          balance: user.balance,
+          status: user.status as 'active' | 'inactive',
+          createdAt: user.createdAt,
+        };
+        set({ user: authUser, isAuthenticated: true });
+        saveAuth(authUser, true);
+        return true;
+      }
+    } catch (error) {
+      console.log('API registration failed, using localStorage');
+    }
+
+    // Fallback to localStorage
     const users = getUsers();
     
     // Check if email already exists

@@ -44,12 +44,12 @@ export default function RegisterPage() {
 
       // Save to localStorage for session
       const { registerUser, login } = useAuthStore.getState();
-      registerUser({
+      await registerUser({
         name: formData.name,
         email: formData.email,
         password: formData.password,
       });
-      login(formData.email, formData.password);
+      await login(formData.email, formData.password);
 
       setTimeout(() => {
         setIsLoading(false);
@@ -60,7 +60,7 @@ export default function RegisterPage() {
       console.log('API not available, using localStorage');
       const { registerUser, login } = useAuthStore.getState();
       
-      const success = registerUser({
+      const success = await registerUser({
         name: formData.name,
         email: formData.email,
         password: formData.password,
@@ -72,7 +72,7 @@ export default function RegisterPage() {
         return;
       }
 
-      login(formData.email, formData.password);
+      await login(formData.email, formData.password);
       
       setTimeout(() => {
         setIsLoading(false);

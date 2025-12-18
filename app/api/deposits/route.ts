@@ -41,6 +41,21 @@ export async function POST(request: Request) {
   try {
     const { userId, amount, method } = await request.json();
 
+    console.log('Creating deposit:', { userId, amount, method });
+
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(userId) }
+    });
+
+    if (!user) {
+      console.error('User not found:', userId);
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
     const deposit = await prisma.deposit.create({
       data: {
         userId: parseInt(userId),
@@ -71,7 +86,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Create deposit error:', error);
     return NextResponse.json(
-      { error: 'Server error' },
+      { error: 'Server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

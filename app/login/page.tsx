@@ -30,17 +30,22 @@ export default function LoginPage() {
 
       // Save to localStorage for session
       const { login } = useAuthStore.getState();
-      login(email, password);
+      const success = await login(email, password);
 
-      setTimeout(() => {
+      if (success) {
+        setTimeout(() => {
+          setIsLoading(false);
+          router.push('/');
+        }, 500);
+      } else {
+        alert('Login failed');
         setIsLoading(false);
-        router.push('/');
-      }, 500);
+      }
     } catch (error) {
       // Fallback to localStorage
       console.log('API not available, using localStorage');
       const { login } = useAuthStore.getState();
-      const success = login(email, password);
+      const success = await login(email, password);
       
       if (!success) {
         alert('Invalid email or password');
