@@ -9,15 +9,13 @@ import ConnectButton from '@/components/ConnectButton';
 import PromoBanner from '@/components/PromoBanner';
 import Footer from '@/components/Footer';
 import SideMenu from '@/components/SideMenu';
-import ProtectedRoute from '@/components/ProtectedRoute';
 import { Menu } from 'lucide-react';
 
 export default function Home() {
   const [showSideMenu, setShowSideMenu] = useState(false);
 
   return (
-    <ProtectedRoute>
-      <main className="min-h-screen bg-black">
+    <main className="min-h-screen bg-black">
         {/* Hamburger Menu Button */}
         <button
           onClick={() => setShowSideMenu(true)}
@@ -40,6 +38,5 @@ export default function Home() {
           )}
         </AnimatePresence>
       </main>
-    </ProtectedRoute>
   );
 }
