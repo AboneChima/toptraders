@@ -1,0 +1,302 @@
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { useAuthStore } from './authStore';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  balance: number;
+  status: 'active' | 'inactive';
+  createdAt: string;
+}
+
+interface CurrencyPair {
+  id: string;
+  name: string;
+  status: boolean;
+  category: 'USDT' | 'Web3' | 'NFT';
+  price: number;
+  change: number;
+  icon: string;
+  description?: string;
+}
+
+interface Withdrawal {
+  id: string;
+  userId: string;
+  userName: string;
+  amount: number;
+  currency: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+}
+
+interface Deposit {
+  id: string;
+  userId: string;
+  userName: string;
+  amount: number;
+  currency: string;
+  status: 'pending' | 'confirmed' | 'rejected';
+  createdAt: string;
+}
+
+interface Trade {
+  id: string;
+  userId: string;
+  userName: string;
+  pair: string;
+  type: 'up' | 'down';
+  amount: number;
+  profit: number;
+  status: 'active' | 'completed' | 'failed';
+  createdAt: string;
+}
+
+interface AdminState {
+  isAuthenticated: boolean;
+  currencyPairs: CurrencyPair[];
+  withdrawals: Withdrawal[];
+  deposits: Deposit[];
+  trades: Trade[];
+  
+  // Actions
+  login: (password: string) => boolean;
+  logout: () => void;
+  
+  // User management (now syncs with authStore)
+  getAllUsers: () => User[];
+  addUser: (user: Omit<User, 'id' | 'createdAt'>) => void;
+  updateUser: (id: string, updates: Partial<User>) => void;
+  deleteUser: (id: string) => void;
+  
+  // Currency management
+  addCurrencyPair: (pair: Omit<CurrencyPair, 'id'>) => void;
+  toggleCurrencyPair: (id: string) => void;
+  deleteCurrencyPair: (id: string) => void;
+  updateCurrencyPair: (id: string, updates: Partial<CurrencyPair>) => void;
+  removeDuplicatePairs: () => void;
+  
+  // Withdrawal management
+  addWithdrawal: (withdrawal: Omit<Withdrawal, 'id' | 'createdAt' | 'status'>) => void;
+  updateWithdrawalStatus: (id: string, status: 'approved' | 'rejected') => void;
+  
+  // Deposit management
+  addDeposit: (deposit: Omit<Deposit, 'id' | 'createdAt' | 'status'>) => void;
+  updateDepositStatus: (id: string, status: 'confirmed' | 'rejected') => void;
+  
+  // Trade management
+  addTrade: (trade: Omit<Trade, 'id' | 'createdAt' | 'status'>) => void;
+  updateTrade: (id: string, updates: Partial<Trade>) => void;
+}
+
+export const useAdminStore = create<AdminState>()(
+  persist(
+    (set) => ({
+      isAuthenticated: false,
+      currencyPairs: [],
+      withdrawals: [],
+      deposits: [],
+      trades: [],
+
+      login: (password: string) => {
+        const isValid = password === 'admin123'; // Change this to your secure password
+        if (isValid) {
+          set({ isAuthenticated: true });
+        }
+        return isValid;
+      },
+
+      logout: () => set({ isAuthenticated: false }),
+
+      // Get all users from authStore
+      getAllUsers: () => {
+        return useAuthStore.getState().allUsers.map(u => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          balance: u.balance || 0,
+          status: (u.status || 'active') as 'active' | 'inactive',
+          createdAt: u.createdAt || new Date().toISOString(),
+        }));
+      },
+
+      addUser: (user) => {
+        const newUser = {
+          ...user,
+          id: Date.now().toString(),
+          createdAt: new Date().toISOString(),
+        };
+        // Add to authStore
+        useAuthStore.getState().registerUser(newUser);
+      },
+
+      updateUser: (id, updates) => {
+        const authStore = useAuthStore.getState();
+        const users = authStore.allUsers;
+        const updatedUsers = users.map((user) =>
+          user.id === id ? { ...user, ...updates } : user
+        );
+        // Update authStore directly
+        useAuthStore.setState({ allUsers: updatedUsers });
+        
+        // If updating balance, also update in authStore's updateUserBalance
+        if (updates.balance !== undefined) {
+          authStore.updateUserBalance(id, updates.balance);
+        }
+      },
+
+      deleteUser: (id) => {
+        const authStore = useAuthStore.getState();
+        const users = authStore.allUsers;
+        const updatedUsers = users.filter((user) => user.id !== id);
+        useAuthStore.setState({ allUsers: updatedUsers });
+      },
+
+      addCurrencyPair: (pair) =>
+        set((state) => {
+          // Check if pair with same name already exists
+          const exists = state.currencyPairs.some(p => p.name === pair.name);
+          if (exists) {
+            console.warn(`Currency pair ${pair.name} already exists, skipping...`);
+            return state;
+          }
+          
+          return {
+            currencyPairs: [
+              ...state.currencyPairs,
+              {
+                ...pair,
+                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              },
+            ],
+          };
+        }),
+
+      updateCurrencyPair: (id, updates) =>
+        set((state) => ({
+          currencyPairs: state.currencyPairs.map((pair) =>
+            pair.id === id ? { ...pair, ...updates } : pair
+          ),
+        })),
+
+      toggleCurrencyPair: (id) =>
+        set((state) => ({
+          currencyPairs: state.currencyPairs.map((pair) =>
+            pair.id === id ? { ...pair, status: !pair.status } : pair
+          ),
+        })),
+
+      deleteCurrencyPair: (id) =>
+        set((state) => ({
+          currencyPairs: state.currencyPairs.filter((pair) => pair.id !== id),
+        })),
+
+      removeDuplicatePairs: () =>
+        set((state) => {
+          const seen = new Map<string, CurrencyPair>();
+          const uniquePairs: CurrencyPair[] = [];
+          
+          // Keep only the first occurrence of each pair name
+          state.currencyPairs.forEach(pair => {
+            if (!seen.has(pair.name)) {
+              seen.set(pair.name, pair);
+              uniquePairs.push(pair);
+            }
+          });
+          
+          if (uniquePairs.length < state.currencyPairs.length) {
+            console.log(`Removed ${state.currencyPairs.length - uniquePairs.length} duplicate currency pairs`);
+          }
+          
+          return { currencyPairs: uniquePairs };
+        }),
+
+      addWithdrawal: (withdrawal) =>
+        set((state) => ({
+          withdrawals: [
+            ...state.withdrawals,
+            {
+              ...withdrawal,
+              id: Date.now().toString(),
+              status: 'pending',
+              createdAt: new Date().toISOString(),
+            },
+          ],
+        })),
+
+      updateWithdrawalStatus: (id, status) =>
+        set((state) => {
+          const withdrawal = state.withdrawals.find(w => w.id === id);
+          if (withdrawal && status === 'approved') {
+            // Update user balance in authStore
+            const authStore = useAuthStore.getState();
+            const user = authStore.allUsers.find(u => u.id === withdrawal.userId);
+            if (user) {
+              authStore.updateUserBalance(withdrawal.userId, (user.balance || 0) - withdrawal.amount);
+            }
+          }
+          return {
+            withdrawals: state.withdrawals.map((w) =>
+              w.id === id ? { ...w, status } : w
+            ),
+          };
+        }),
+
+      addDeposit: (deposit) =>
+        set((state) => ({
+          deposits: [
+            ...state.deposits,
+            {
+              ...deposit,
+              id: Date.now().toString(),
+              status: 'pending',
+              createdAt: new Date().toISOString(),
+            },
+          ],
+        })),
+
+      updateDepositStatus: (id, status) =>
+        set((state) => {
+          const deposit = state.deposits.find(d => d.id === id);
+          if (deposit && status === 'confirmed') {
+            // Update user balance in authStore
+            const authStore = useAuthStore.getState();
+            const user = authStore.allUsers.find(u => u.id === deposit.userId);
+            if (user) {
+              authStore.updateUserBalance(deposit.userId, (user.balance || 0) + deposit.amount);
+            }
+          }
+          return {
+            deposits: state.deposits.map((d) =>
+              d.id === id ? { ...d, status } : d
+            ),
+          };
+        }),
+
+      addTrade: (trade) =>
+        set((state) => ({
+          trades: [
+            ...state.trades,
+            {
+              ...trade,
+              id: Date.now().toString(),
+              status: 'active',
+              createdAt: new Date().toISOString(),
+            },
+          ],
+        })),
+
+      updateTrade: (id, updates) =>
+        set((state) => ({
+          trades: state.trades.map((t) =>
+            t.id === id ? { ...t, ...updates } : t
+          ),
+        })),
+    }),
+    {
+      name: 'admin-storage',
+    }
+  )
+);
