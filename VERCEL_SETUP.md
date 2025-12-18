@@ -1,55 +1,73 @@
-# Vercel Deployment Guide
+# Vercel Deployment Guide with Prisma Postgres
 
-## Setup Vercel Postgres Database
+## Setup Prisma Postgres Database
 
-### 1. Create Vercel Postgres Database
+### 1. Get Database Connection Strings
 
-1. Go to your Vercel dashboard: https://vercel.com/dashboard
+You already created a Prisma Postgres database. Now get the connection strings:
+
+1. Go to your Prisma Postgres dashboard
+2. Copy both connection strings:
+   - `DATABASE_URL` (Accelerate connection - starts with `prisma://`)
+   - `DIRECT_URL` (Direct connection - starts with `postgresql://`)
+
+### 2. Add Environment Variables to Vercel
+
+1. Go to Vercel dashboard: https://vercel.com/dashboard
 2. Select your project: `toptraders`
-3. Go to the "Storage" tab
-4. Click "Create Database"
-5. Select "Postgres"
-6. Choose a name: `toptraders-db`
-7. Select region (choose closest to your users)
-8. Click "Create"
+3. Go to Settings → Environment Variables
+4. Add these variables:
+   - `DATABASE_URL` = your Prisma Accelerate URL
+   - `DIRECT_URL` = your direct PostgreSQL URL
 
-### 2. Connect Database to Project
+### 3. Push Database Schema
 
-Vercel will automatically add these environment variables to your project:
-- `POSTGRES_URL`
-- `POSTGRES_PRISMA_URL`
-- `POSTGRES_URL_NON_POOLING`
-- `POSTGRES_USER`
-- `POSTGRES_HOST`
-- `POSTGRES_PASSWORD`
-- `POSTGRES_DATABASE`
-
-### 3. Initialize Database Tables
-
-After deployment, visit this URL to create the tables:
-```
-https://your-app.vercel.app/api/init-db
+Run this command locally (make sure you have the env vars in `.env.local`):
+```bash
+npx prisma db push
 ```
 
-You should see: `{"message":"Database initialized successfully"}`
+This will create all the tables in your database.
 
-### 4. Test the API
+### 4. Deploy to Vercel
 
-- Register: `POST https://your-app.vercel.app/api/auth/register`
-- Login: `POST https://your-app.vercel.app/api/auth/login`
-- Get Users: `GET https://your-app.vercel.app/api/users`
+```bash
+git add .
+git commit -m "Switch to Prisma Postgres"
+git push
+```
+
+Vercel will automatically deploy.
+
+### 5. Test the API
+
+After deployment:
+
+- Test connection: `GET https://toptraders-p6s4.vercel.app/api/init-db`
+- Register: `POST https://toptraders-p6s4.vercel.app/api/auth/register`
+  ```json
+  {
+    "name": "Test User",
+    "email": "test@example.com",
+    "password": "password123"
+  }
+  ```
+- Login: `POST https://toptraders-p6s4.vercel.app/api/auth/login`
+- Get Users: `GET https://toptraders-p6s4.vercel.app/api/users`
 
 ## Current Status
 
-✅ Frontend deployed on Vercel (using localStorage)
-✅ API routes created
-✅ Vercel Postgres database added
-⏳ Need to initialize database tables
-⏳ Need to update frontend to use API instead of localStorage
+✅ Prisma Postgres database created
+✅ Code updated to use Prisma Client
+✅ API routes converted to Prisma
+⏳ Need to add env vars to Vercel
+⏳ Need to push database schema
+⏳ Need to deploy
 
-## Next Steps
+## What Changed
 
-1. Add Vercel Postgres database (follow steps above)
-2. Visit `/api/init-db` to create tables
-3. Update frontend auth to use API endpoints
-4. Deploy and test!
+- Removed `@vercel/postgres` package
+- Added `@prisma/client` and `prisma`
+- Created Prisma schema with all tables
+- Updated all API routes to use Prisma
+- Added Prisma generate to build script

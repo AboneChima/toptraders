@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { sql } from '@vercel/postgres';
+import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcrypt';
 
 export async function POST(request: Request) {
@@ -7,11 +7,11 @@ export async function POST(request: Request) {
     const { name, email, password } = await request.json();
 
     // Check if user exists
-    const existingUser = await sql`
-      SELECT * FROM users WHERE email = ${email}
-    `;
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
     
-    if (existingUser.rows.length > 0) {
+    if (existingUser) {
       return NextResponse.json(
         { error: 'Email already registered' },
         { status: 400 }
@@ -22,13 +22,25 @@ export async function POST(request: Request) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
-    const result = await sql`
-      INSERT INTO users (name, email, password, balance, status)
-      VALUES (${name}, ${email}, ${hashedPassword}, 0, 'active')
-      RETURNING id, name, email, balance, status, created_at
-    `;
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        balance: 0,
+        status: 'active'
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        balance: true,
+        status: true,
+        createdAt: true
+      }
+    });
 
-    return NextResponse.json({ user: result.rows[0] }, { status: 201 });
+    return NextResponse.json({ user }, { status: 201 });
   } catch (error) {
     console.error('Register error:', error);
     return NextResponse.json(

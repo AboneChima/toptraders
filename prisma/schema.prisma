@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id         Int          @id @default(autoincrement())
+  name       String
+  email      String       @unique
+  password   String
+  balance    Decimal      @default(0) @db.Decimal(10, 2)
+  status     String       @default("active")
+  createdAt  DateTime     @default(now()) @map("created_at")
+  trades     Trade[]
+  deposits   Deposit[]
+  withdrawals Withdrawal[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model CurrencyPair {
+  id          Int      @id @default(autoincrement())
+  name        String
+  category    String?
+  price       Decimal  @db.Decimal(20, 8)
+  change      Decimal  @default(0) @db.Decimal(10, 5)
+  icon        String?
+  description String?  @db.Text
+  status      Boolean  @default(true)
+  updatedAt   DateTime @default(now()) @map("updated_at")
+
+  @@map("currency_pairs")
+}
+
+model Trade {
+  id           Int       @id @default(autoincrement())
+  userId       Int       @map("user_id")
+  currencyPair String    @map("currency_pair")
+  type         String
+  amount       Decimal   @db.Decimal(10, 2)
+  entryPrice   Decimal   @map("entry_price") @db.Decimal(20, 8)
+  currentPrice Decimal?  @map("current_price") @db.Decimal(20, 8)
+  profitLoss   Decimal   @default(0) @map("profit_loss") @db.Decimal(10, 2)
+  status       String    @default("open")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  closedAt     DateTime? @map("closed_at")
+  user         User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("trades")
+}
+
+model Deposit {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @map("user_id")
+  amount        Decimal  @db.Decimal(10, 2)
+  method        String
+  status        String   @default("pending")
+  transactionId String?  @map("transaction_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("deposits")
+}
+
+model Withdrawal {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @map("user_id")
+  amount        Decimal  @db.Decimal(10, 2)
+  walletAddress String   @map("wallet_address")
+  status        String   @default("pending")
+  createdAt     DateTime @default(now()) @map("created_at")
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("withdrawals")
+}

@@ -1,15 +1,23 @@
 import { NextResponse } from 'next/server';
-import { sql } from '@vercel/postgres';
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    const result = await sql`
-      SELECT id, name, email, balance, status, created_at 
-      FROM users 
-      ORDER BY created_at DESC
-    `;
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        balance: true,
+        status: true,
+        createdAt: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
     
-    return NextResponse.json({ users: result.rows });
+    return NextResponse.json({ users });
   } catch (error) {
     console.error('Get users error:', error);
     return NextResponse.json(
