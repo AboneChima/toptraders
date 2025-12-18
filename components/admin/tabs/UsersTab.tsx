@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAdminStore } from '@/store/adminStore';
 import { useAuthStore } from '@/store/authStore';
+import { api } from '@/lib/api';
 import { Edit, Trash2, DollarSign, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -35,8 +36,20 @@ export default function UsersTab() {
   useEffect(() => {
     setMounted(true);
     
-    // Load users from localStorage directly
-    const loadUsers = () => {
+    // Load users from API or localStorage
+    const loadUsers = async () => {
+      try {
+        // Try API first
+        const result = await api.getUsers();
+        if (result.users) {
+          setAllUsers(result.users);
+          return;
+        }
+      } catch (error) {
+        console.log('API not available, using localStorage');
+      }
+      
+      // Fallback to localStorage
       try {
         const { getAllUsers } = useAuthStore.getState();
         const users = getAllUsers();

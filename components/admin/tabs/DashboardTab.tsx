@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAdminStore } from '@/store/adminStore';
 import { useAuthStore } from '@/store/authStore';
+import { api } from '@/lib/api';
 import { DollarSign, Users, TrendingUp, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 
 export default function DashboardTab() {
@@ -18,8 +19,20 @@ export default function DashboardTab() {
   }>>([]);
 
   useEffect(() => {
-    // Load users from localStorage directly
-    const loadUsers = () => {
+    // Load users from API or localStorage
+    const loadUsers = async () => {
+      try {
+        // Try API first
+        const result = await api.getUsers();
+        if (result.users) {
+          setAllUsers(result.users);
+          return;
+        }
+      } catch (error) {
+        console.log('API not available, using localStorage');
+      }
+      
+      // Fallback to localStorage
       try {
         const { getAllUsers } = useAuthStore.getState();
         const users = getAllUsers();
@@ -31,8 +44,8 @@ export default function DashboardTab() {
 
     loadUsers();
 
-    // Reload users every 2 seconds
-    const interval = setInterval(loadUsers, 2000);
+    // Reload users every 5 seconds
+    const interval = setInterval(loadUsers, 5000);
     return () => clearInterval(interval);
   }, []);
 

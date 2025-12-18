@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Mail, Lock, User, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/authStore';
+import { api } from '@/lib/api';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -27,24 +28,57 @@ export default function RegisterPage() {
 
     setIsLoading(true);
     
-    const { registerUser } = useAuthStore.getState();
-    
-    const success = registerUser({
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-    });
-    
-    if (!success) {
-      alert('Email already registered');
-      setIsLoading(false);
-      return;
+    try {
+      // Try API first (if database is set up)
+      const result = await api.register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (result.error) {
+        alert(result.error);
+        setIsLoading(false);
+        return;
+      }
+
+      // Save to localStorage for session
+      const { registerUser, login } = useAuthStore.getState();
+      registerUser({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      });
+      login(formData.email, formData.password);
+
+      setTimeout(() => {
+        setIsLoading(false);
+        router.push('/');
+      }, 500);
+    } catch (error) {
+      // Fallback to localStorage if API fails
+      console.log('API not available, using localStorage');
+      const { registerUser, login } = useAuthStore.getState();
+      
+      const success = registerUser({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      });
+      
+      if (!success) {
+        alert('Email already registered');
+        setIsLoading(false);
+        return;
+      }
+
+      login(formData.email, formData.password);
+      
+      setTimeout(() => {
+        setIsLoading(false);
+        router.push('/');
+      }, 500);
     }
-    
-    setTimeout(() => {
-      setIsLoading(false);
-      router.push('/');
-    }, 1000);
   };
 
   return (

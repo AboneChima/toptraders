@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/authStore';
+import { api } from '@/lib/api';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,19 +18,41 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     
-    const { login } = useAuthStore.getState();
-    const success = login(email, password);
-    
-    if (!success) {
-      alert('Invalid email or password');
-      setIsLoading(false);
-      return;
+    try {
+      // Try API first
+      const result = await api.login({ email, password });
+
+      if (result.error) {
+        alert(result.error);
+        setIsLoading(false);
+        return;
+      }
+
+      // Save to localStorage for session
+      const { login } = useAuthStore.getState();
+      login(email, password);
+
+      setTimeout(() => {
+        setIsLoading(false);
+        router.push('/');
+      }, 500);
+    } catch (error) {
+      // Fallback to localStorage
+      console.log('API not available, using localStorage');
+      const { login } = useAuthStore.getState();
+      const success = login(email, password);
+      
+      if (!success) {
+        alert('Invalid email or password');
+        setIsLoading(false);
+        return;
+      }
+      
+      setTimeout(() => {
+        setIsLoading(false);
+        router.push('/');
+      }, 500);
     }
-    
-    setTimeout(() => {
-      setIsLoading(false);
-      router.push('/');
-    }, 500);
   };
 
   return (
