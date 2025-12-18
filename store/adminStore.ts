@@ -112,14 +112,7 @@ export const useAdminStore = create<AdminState>()(
 
       // Get all users from authStore
       getAllUsers: () => {
-        return useAuthStore.getState().allUsers.map(u => ({
-          id: u.id,
-          name: u.name,
-          email: u.email,
-          balance: u.balance || 0,
-          status: (u.status || 'active') as 'active' | 'inactive',
-          createdAt: u.createdAt || new Date().toISOString(),
-        }));
+        return useAuthStore.getState().getAllUsers();
       },
 
       addUser: (user) => {
