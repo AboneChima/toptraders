@@ -1,10 +1,21 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useAdminStore } from '@/store/adminStore';
 import { Check, X } from 'lucide-react';
 
 export default function WithdrawalsTab() {
-  const { withdrawals, updateWithdrawalStatus } = useAdminStore();
+  const [mounted, setMounted] = useState(false);
+  const withdrawals = useAdminStore((state) => state.withdrawals);
+  const updateWithdrawalStatus = useAdminStore((state) => state.updateWithdrawalStatus);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <div className="text-white">Loading...</div>;
+  }
 
   return (
     <div

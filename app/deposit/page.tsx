@@ -56,18 +56,25 @@ export default function DepositPage() {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    addDeposit({
+    const depositData = {
       userId: user.id,
       userName: user.name,
       amount: depositAmount,
       currency: selectedCoin,
-    });
+    };
+
+    console.log('Adding deposit:', depositData);
+    addDeposit(depositData);
+    
+    // Force a small delay to ensure state is updated
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     setIsSubmitting(false);
     setShowConfirmModal(false);
     setShowSuccessModal(true);
     setAmount('');
     setSelectedCoin(null);
+    setCopiedCoin(null);
   };
 
   return (

@@ -1,9 +1,19 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useAdminStore } from '@/store/adminStore';
 
 export default function TradesTab() {
-  const { trades } = useAdminStore();
+  const [mounted, setMounted] = useState(false);
+  const trades = useAdminStore((state) => state.trades);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <div className="text-white">Loading...</div>;
+  }
 
   return (
     <div

@@ -202,17 +202,18 @@ export const useAdminStore = create<AdminState>()(
         }),
 
       addWithdrawal: (withdrawal) =>
-        set((state) => ({
-          withdrawals: [
-            ...state.withdrawals,
-            {
-              ...withdrawal,
-              id: Date.now().toString(),
-              status: 'pending',
-              createdAt: new Date().toISOString(),
-            },
-          ],
-        })),
+        set((state) => {
+          const newWithdrawal = {
+            ...withdrawal,
+            id: Date.now().toString(),
+            status: 'pending' as const,
+            createdAt: new Date().toISOString(),
+          };
+          console.log('AdminStore: Adding withdrawal', newWithdrawal);
+          return {
+            withdrawals: [...state.withdrawals, newWithdrawal],
+          };
+        }),
 
       updateWithdrawalStatus: (id, status) =>
         set((state) => {
@@ -234,17 +235,19 @@ export const useAdminStore = create<AdminState>()(
         }),
 
       addDeposit: (deposit) =>
-        set((state) => ({
-          deposits: [
-            ...state.deposits,
-            {
-              ...deposit,
-              id: Date.now().toString(),
-              status: 'pending',
-              createdAt: new Date().toISOString(),
-            },
-          ],
-        })),
+        set((state) => {
+          const newDeposit = {
+            ...deposit,
+            id: Date.now().toString(),
+            status: 'pending' as const,
+            createdAt: new Date().toISOString(),
+          };
+          console.log('AdminStore: Adding deposit', newDeposit);
+          console.log('Current deposits:', state.deposits.length);
+          return {
+            deposits: [...state.deposits, newDeposit],
+          };
+        }),
 
       updateDepositStatus: (id, status) =>
         set((state) => {
@@ -266,17 +269,18 @@ export const useAdminStore = create<AdminState>()(
         }),
 
       addTrade: (trade) =>
-        set((state) => ({
-          trades: [
-            ...state.trades,
-            {
-              ...trade,
-              id: Date.now().toString(),
-              status: 'active',
-              createdAt: new Date().toISOString(),
-            },
-          ],
-        })),
+        set((state) => {
+          const newTrade = {
+            ...trade,
+            id: Date.now().toString(),
+            status: 'active' as const,
+            createdAt: new Date().toISOString(),
+          };
+          console.log('AdminStore: Adding trade', newTrade);
+          return {
+            trades: [...state.trades, newTrade],
+          };
+        }),
 
       updateTrade: (id, updates) =>
         set((state) => ({
