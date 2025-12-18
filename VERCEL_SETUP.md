@@ -60,9 +60,18 @@ After deployment:
 ✅ Prisma Postgres database created
 ✅ Code updated to use Prisma Client
 ✅ API routes converted to Prisma
+✅ Fixed Decimal type serialization in API responses
+✅ Admin panel fetches from database
 ⏳ Need to add env vars to Vercel
 ⏳ Need to push database schema
 ⏳ Need to deploy
+
+## Recent Fixes
+
+- Fixed `balance.toFixed is not a function` error
+- All API routes now convert Prisma Decimal types to numbers
+- Admin panel properly displays user balances
+- Routes fixed: `/api/users`, `/api/users/[id]/balance`, `/api/auth/login`, `/api/auth/register`
 
 ## What Changed
 
@@ -71,3 +80,4 @@ After deployment:
 - Created Prisma schema with all tables
 - Updated all API routes to use Prisma
 - Added Prisma generate to build script
+- Added Decimal to number conversion for JSON serialization

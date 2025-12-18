@@ -86,7 +86,8 @@ export default function UsersTab() {
 
   const handleFundUser = (amount: number) => {
     if (selectedUser) {
-      updateUser(selectedUser.id, { balance: selectedUser.balance + amount });
+      const currentBalance = Number(selectedUser.balance) || 0;
+      updateUser(selectedUser.id, { balance: currentBalance + amount });
       setShowFundModal(false);
       setSelectedUser(null);
     }
@@ -143,7 +144,7 @@ export default function UsersTab() {
                 <tr key={user.id} className="border-b border-white/5 hover:bg-white/5">
                   <td className="py-3 px-4 text-sm text-white">{user.name}</td>
                   <td className="py-3 px-4 text-sm text-gray-400">{user.email}</td>
-                  <td className="py-3 px-4 text-sm text-white">${(user.balance || 0).toFixed(2)}</td>
+                  <td className="py-3 px-4 text-sm text-white">${(Number(user.balance) || 0).toFixed(2)}</td>
                   <td className="py-3 px-4">
                     <span className={`text-xs px-2 py-1 rounded-full ${
                       user.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
@@ -259,7 +260,7 @@ export default function UsersTab() {
               </div>
               <div className="mb-4">
                 <p className="text-sm text-gray-400 mb-1">User: {selectedUser.name}</p>
-                <p className="text-sm text-gray-400">Current Balance: ${selectedUser.balance.toFixed(2)}</p>
+                <p className="text-sm text-gray-400">Current Balance: ${(Number(selectedUser.balance) || 0).toFixed(2)}</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {[100, 500, 1000, 5000].map((amount) => (

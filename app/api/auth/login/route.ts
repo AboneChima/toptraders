@@ -27,9 +27,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // Return user without password
+    // Return user without password and convert Decimal to number
     const { password: _, ...userWithoutPassword } = user;
-    return NextResponse.json({ user: userWithoutPassword });
+    const serializedUser = {
+      ...userWithoutPassword,
+      balance: Number(userWithoutPassword.balance)
+    };
+    return NextResponse.json({ user: serializedUser });
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(

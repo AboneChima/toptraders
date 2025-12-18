@@ -40,7 +40,13 @@ export async function POST(request: Request) {
       }
     });
 
-    return NextResponse.json({ user }, { status: 201 });
+    // Convert Decimal to number for JSON serialization
+    const serializedUser = {
+      ...user,
+      balance: Number(user.balance)
+    };
+
+    return NextResponse.json({ user: serializedUser }, { status: 201 });
   } catch (error) {
     console.error('Register error:', error);
     return NextResponse.json(

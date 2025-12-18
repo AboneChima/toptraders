@@ -17,7 +17,13 @@ export async function GET() {
       }
     });
     
-    return NextResponse.json({ users });
+    // Convert Decimal to number for JSON serialization
+    const serializedUsers = users.map(user => ({
+      ...user,
+      balance: Number(user.balance)
+    }));
+    
+    return NextResponse.json({ users: serializedUsers });
   } catch (error) {
     console.error('Get users error:', error);
     return NextResponse.json(

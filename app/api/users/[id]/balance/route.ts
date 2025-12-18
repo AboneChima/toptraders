@@ -21,7 +21,13 @@ export async function PATCH(
       }
     });
 
-    return NextResponse.json({ user });
+    // Convert Decimal to number for JSON serialization
+    const serializedUser = {
+      ...user,
+      balance: Number(user.balance)
+    };
+
+    return NextResponse.json({ user: serializedUser });
   } catch (error) {
     console.error('Update balance error:', error);
     return NextResponse.json(
