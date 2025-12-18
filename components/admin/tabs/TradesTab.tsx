@@ -1,17 +1,32 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAdminStore } from '@/store/adminStore';
+import { api } from '@/lib/api';
 
 export default function TradesTab() {
-  const [mounted, setMounted] = useState(false);
-  const trades = useAdminStore((state) => state.trades);
+  const [trades, setTrades] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setMounted(true);
+    loadTrades();
+    const interval = setInterval(loadTrades, 3000);
+    return () => clearInterval(interval);
   }, []);
 
-  if (!mounted) {
+  const loadTrades = async () => {
+    try {
+      const result = await api.getTrades();
+      if (result.trades) {
+        setTrades(result.trades);
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error('Load trades error:', error);
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
     return <div className="text-white">Loading...</div>;
   }
 
@@ -20,7 +35,7 @@ export default function TradesTab() {
       className="rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6"
       style={{ boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)' }}
     >
-      <h3 className="text-lg font-semibold text-white mb-6">All Trades</h3>
+      <h3 className="text-lg font-semibold text-white mb-6">All Trades ({trades.length})</h3>
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
@@ -38,7 +53,7 @@ export default function TradesTab() {
             {trades.map((trade) => (
               <tr key={trade.id} className="border-b border-white/5 hover:bg-white/5">
                 <td className="py-3 px-4 text-sm text-white">{trade.userName}</td>
-                <td className="py-3 px-4 text-sm text-white">{trade.pair}</td>
+                <td className="py-3 px-4 text-sm text-white">{trade.currencyPair}</td>
                 <td className="py-3 px-4">
                   <span className={`text-xs px-2 py-1 rounded-full ${
                     trade.type === 'up' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
@@ -48,15 +63,14 @@ export default function TradesTab() {
                 </td>
                 <td className="py-3 px-4 text-sm text-white">${trade.amount}</td>
                 <td className="py-3 px-4">
-                  <span className={`text-sm font-semibold ${trade.profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {trade.profit >= 0 ? '+' : ''}${trade.profit}
+                  <span className={`text-sm font-semibold ${trade.profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {trade.profitLoss >= 0 ? '+' : ''}${trade.profitLoss}
                   </span>
                 </td>
                 <td className="py-3 px-4">
                   <span className={`text-xs px-2 py-1 rounded-full ${
-                    trade.status === 'completed' ? 'bg-green-500/20 text-green-400' :
-                    trade.status === 'active' ? 'bg-yellow-500/20 text-yellow-400' :
-                    'bg-red-500/20 text-red-400'
+                    trade.status === 'closed' ? (trade.profitLoss > 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400') :
+                    'bg-yellow-500/20 text-yellow-400'
                   }`}>
                     {trade.status}
                   </span>

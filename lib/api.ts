@@ -43,4 +43,76 @@ export const api = {
     });
     return res.json();
   },
+
+  // Deposits
+  getDeposits: async () => {
+    const res = await fetch(`${API_BASE}/api/deposits`);
+    return res.json();
+  },
+
+  createDeposit: async (data: { userId: string; amount: number; method: string }) => {
+    const res = await fetch(`${API_BASE}/api/deposits`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  updateDepositStatus: async (depositId: string, status: string) => {
+    const res = await fetch(`${API_BASE}/api/deposits/${depositId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    return res.json();
+  },
+
+  // Withdrawals
+  getWithdrawals: async () => {
+    const res = await fetch(`${API_BASE}/api/withdrawals`);
+    return res.json();
+  },
+
+  createWithdrawal: async (data: { userId: string; amount: number; walletAddress: string }) => {
+    const res = await fetch(`${API_BASE}/api/withdrawals`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  updateWithdrawalStatus: async (withdrawalId: string, status: string) => {
+    const res = await fetch(`${API_BASE}/api/withdrawals/${withdrawalId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    return res.json();
+  },
+
+  // Trades
+  getTrades: async () => {
+    const res = await fetch(`${API_BASE}/api/trades`);
+    return res.json();
+  },
+
+  createTrade: async (data: { userId: string; currencyPair: string; type: string; amount: number; entryPrice: number }) => {
+    const res = await fetch(`${API_BASE}/api/trades`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  updateTrade: async (tradeId: string, data: { status?: string; profitLoss?: number; currentPrice?: number }) => {
+    const res = await fetch(`${API_BASE}/api/trades/${tradeId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
 };

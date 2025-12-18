@@ -53,28 +53,33 @@ export default function DepositPage() {
 
     setIsSubmitting(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      // Save to database via API
+      const result = await fetch('/api/deposits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          amount: depositAmount,
+          method: selectedCoin,
+        }),
+      });
 
-    const depositData = {
-      userId: user.id,
-      userName: user.name,
-      amount: depositAmount,
-      currency: selectedCoin,
-    };
+      if (!result.ok) {
+        throw new Error('Failed to create deposit');
+      }
 
-    console.log('Adding deposit:', depositData);
-    addDeposit(depositData);
-    
-    // Force a small delay to ensure state is updated
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    setIsSubmitting(false);
-    setShowConfirmModal(false);
-    setShowSuccessModal(true);
-    setAmount('');
-    setSelectedCoin(null);
-    setCopiedCoin(null);
+      setIsSubmitting(false);
+      setShowConfirmModal(false);
+      setShowSuccessModal(true);
+      setAmount('');
+      setSelectedCoin(null);
+      setCopiedCoin(null);
+    } catch (error) {
+      console.error('Deposit error:', error);
+      alert('Failed to submit deposit. Please try again.');
+      setIsSubmitting(false);
+    }
   };
 
   return (

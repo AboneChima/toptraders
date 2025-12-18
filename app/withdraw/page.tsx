@@ -63,21 +63,32 @@ export default function WithdrawPage() {
 
     setIsSubmitting(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      // Save to database via API
+      const result = await fetch('/api/withdrawals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          amount: parseFloat(amount),
+          walletAddress,
+        }),
+      });
 
-    addWithdrawal({
-      userId: user.id,
-      userName: user.name,
-      amount: parseFloat(amount),
-      currency,
-    });
+      if (!result.ok) {
+        throw new Error('Failed to create withdrawal');
+      }
 
-    setIsSubmitting(false);
-    setShowConfirmModal(false);
-    setShowSuccessModal(true);
-    setAmount('');
-    setWalletAddress('');
+      setIsSubmitting(false);
+      setShowConfirmModal(false);
+      setShowSuccessModal(true);
+      setAmount('');
+      setWalletAddress('');
+    } catch (error) {
+      console.error('Withdrawal error:', error);
+      alert('Failed to submit withdrawal. Please try again.');
+      setIsSubmitting(false);
+    }
   };
 
   const finalAmount = parseFloat(amount) || 0;

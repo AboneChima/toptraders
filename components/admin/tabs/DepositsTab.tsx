@@ -1,31 +1,42 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAdminStore } from '@/store/adminStore';
 import { Check, X } from 'lucide-react';
+import { api } from '@/lib/api';
 
 export default function DepositsTab() {
-  const [mounted, setMounted] = useState(false);
-  const deposits = useAdminStore((state) => state.deposits);
-  const updateDepositStatus = useAdminStore((state) => state.updateDepositStatus);
-  const addDeposit = useAdminStore((state) => state.addDeposit);
+  const [deposits, setDeposits] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setMounted(true);
-    console.log('DepositsTab mounted, deposits count:', deposits.length);
-    console.log('Deposits:', deposits);
-  }, [deposits]);
+    loadDeposits();
+    const interval = setInterval(loadDeposits, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
-  const handleTestDeposit = () => {
-    addDeposit({
-      userId: 'test-user',
-      userName: 'Test User',
-      amount: 100,
-      currency: 'USDT',
-    });
+  const loadDeposits = async () => {
+    try {
+      const result = await api.getDeposits();
+      if (result.deposits) {
+        setDeposits(result.deposits);
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error('Load deposits error:', error);
+      setLoading(false);
+    }
   };
 
-  if (!mounted) {
+  const handleUpdateStatus = async (id: string, status: string) => {
+    try {
+      await api.updateDepositStatus(id, status);
+      loadDeposits();
+    } catch (error) {
+      console.error('Update deposit error:', error);
+    }
+  };
+
+  if (loading) {
     return <div className="text-white">Loading...</div>;
   }
 
@@ -34,22 +45,14 @@ export default function DepositsTab() {
       className="rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6"
       style={{ boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)' }}
     >
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-white">Deposit Requests ({deposits.length})</h3>
-        <button
-          onClick={handleTestDeposit}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
-        >
-          Add Test Deposit
-        </button>
-      </div>
+      <h3 className="text-lg font-semibold text-white mb-6">Deposit Requests ({deposits.length})</h3>
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="border-b border-white/10">
               <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">User</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">Amount</th>
-              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">Currency</th>
+              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">Method</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">Status</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">Date</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">Actions</th>
@@ -60,7 +63,7 @@ export default function DepositsTab() {
               <tr key={d.id} className="border-b border-white/5 hover:bg-white/5">
                 <td className="py-3 px-4 text-sm text-white">{d.userName}</td>
                 <td className="py-3 px-4 text-sm text-white">${d.amount.toFixed(2)}</td>
-                <td className="py-3 px-4 text-sm text-gray-400">{d.currency}</td>
+                <td className="py-3 px-4 text-sm text-gray-400">{d.method}</td>
                 <td className="py-3 px-4">
                   <span className={`text-xs px-2 py-1 rounded-full ${
                     d.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
@@ -77,13 +80,13 @@ export default function DepositsTab() {
                   {d.status === 'pending' && (
                     <div className="flex gap-2">
                       <button
-                        onClick={() => updateDepositStatus(d.id, 'confirmed')}
+                        onClick={() => handleUpdateStatus(d.id, 'confirmed')}
                         className="p-2 text-green-400 hover:bg-green-500/10 rounded-lg"
                       >
                         <Check className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => updateDepositStatus(d.id, 'rejected')}
+                        onClick={() => handleUpdateStatus(d.id, 'rejected')}
                         className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg"
                       >
                         <X className="w-4 h-4" />
