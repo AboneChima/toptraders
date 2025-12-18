@@ -84,12 +84,39 @@ export default function UsersTab() {
     }
   };
 
-  const handleFundUser = (amount: number) => {
+  const handleFundUser = async (amount: number) => {
     if (selectedUser) {
-      const currentBalance = Number(selectedUser.balance) || 0;
-      updateUser(selectedUser.id, { balance: currentBalance + amount });
-      setShowFundModal(false);
-      setSelectedUser(null);
+      try {
+        const currentBalance = Number(selectedUser.balance) || 0;
+        const newBalance = currentBalance + amount;
+        
+        // Update via API
+        await fetch(`/api/users/${selectedUser.id}/balance`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ balance: newBalance }),
+        });
+
+        // Reload users
+        const loadUsers = async () => {
+          try {
+            const result = await fetch('/api/users');
+            const data = await result.json();
+            if (data.users) {
+              setAllUsers(data.users);
+            }
+          } catch (error) {
+            console.error('Error loading users:', error);
+          }
+        };
+        await loadUsers();
+
+        setShowFundModal(false);
+        setSelectedUser(null);
+      } catch (error) {
+        console.error('Fund user error:', error);
+        alert('Failed to fund user');
+      }
     }
   };
 
