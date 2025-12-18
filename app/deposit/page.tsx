@@ -23,16 +23,18 @@ export default function DepositPage() {
   const { addDeposit } = useAdminStore();
   const [showSideMenu, setShowSideMenu] = useState(false);
   const [selectedCoin, setSelectedCoin] = useState<string | null>(null);
-  const [copiedAddress, setCopiedAddress] = useState(false);
+  const [copiedCoin, setCopiedCoin] = useState<string | null>(null);
+  const [showCopyFeedback, setShowCopyFeedback] = useState(false);
   const [amount, setAmount] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const handleCopyAddress = (address: string) => {
+  const handleCopyAddress = (address: string, coin: string) => {
     navigator.clipboard.writeText(address);
-    setCopiedAddress(true);
-    setTimeout(() => setCopiedAddress(false), 2000);
+    setCopiedCoin(coin);
+    setShowCopyFeedback(true);
+    setTimeout(() => setShowCopyFeedback(false), 2000);
   };
 
   const handleSubmitDeposit = async () => {
@@ -44,7 +46,7 @@ export default function DepositPage() {
       return;
     }
 
-    if (!copiedAddress) {
+    if (copiedCoin !== selectedCoin) {
       alert('Please copy the wallet address before proceeding');
       return;
     }
@@ -141,18 +143,18 @@ export default function DepositPage() {
                                 {address}
                               </code>
                               <button
-                                onClick={() => handleCopyAddress(address)}
+                                onClick={() => handleCopyAddress(address, coin)}
                                 className="p-3 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
                               >
-                                {copiedAddress ? (
+                                {copiedCoin === coin && showCopyFeedback ? (
                                   <Check className="w-4 h-4 text-green-400" />
                                 ) : (
                                   <Copy className="w-4 h-4 text-white" />
                                 )}
                               </button>
                             </div>
-                            {copiedAddress && (
-                              <p className="text-xs text-green-400 mb-2">✓ Address copied to clipboard</p>
+                            {copiedCoin === coin && (
+                              <p className="text-xs text-green-400 mb-2">✓ Address copied - You can now enter amount</p>
                             )}
                           </div>
 
@@ -164,15 +166,15 @@ export default function DepositPage() {
                               value={amount}
                               onChange={(e) => setAmount(e.target.value)}
                               placeholder="Enter amount"
-                              disabled={!copiedAddress}
+                              disabled={copiedCoin !== coin}
                               className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 outline-none focus:border-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                             <p className="text-xs text-gray-400 mt-2">
-                              {copiedAddress ? 'Minimum deposit: $10' : 'Copy the address above to continue'}
+                              {copiedCoin === coin ? 'Minimum deposit: $10' : 'Copy the address above to continue'}
                             </p>
                           </div>
 
-                          {copiedAddress && amount && parseFloat(amount) >= 10 && (
+                          {copiedCoin === coin && amount && parseFloat(amount) >= 10 && (
                             <button
                               onClick={() => setShowConfirmModal(true)}
                               className="w-full py-3 bg-white text-black rounded-xl font-semibold hover:bg-gray-200 transition-colors"
