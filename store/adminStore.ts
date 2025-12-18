@@ -117,34 +117,29 @@ export const useAdminStore = create<AdminState>()(
 
       addUser: (user) => {
         const newUser = {
-          ...user,
-          id: Date.now().toString(),
-          createdAt: new Date().toISOString(),
+          name: user.name,
+          email: user.email,
+          password: 'default123', // Default password for admin-created users
         };
         // Add to authStore
         useAuthStore.getState().registerUser(newUser);
       },
 
       updateUser: (id, updates) => {
-        const authStore = useAuthStore.getState();
-        const users = authStore.allUsers;
-        const updatedUsers = users.map((user) =>
-          user.id === id ? { ...user, ...updates } : user
-        );
-        // Update authStore directly
-        useAuthStore.setState({ allUsers: updatedUsers });
-        
-        // If updating balance, also update in authStore's updateUserBalance
+        // Only support balance updates for now
         if (updates.balance !== undefined) {
-          authStore.updateUserBalance(id, updates.balance);
+          useAuthStore.getState().updateUserBalance(id, updates.balance);
         }
       },
 
       deleteUser: (id) => {
-        const authStore = useAuthStore.getState();
-        const users = authStore.allUsers;
+        // Get current users from localStorage
+        const users = useAuthStore.getState().getAllUsers();
         const updatedUsers = users.filter((user) => user.id !== id);
-        useAuthStore.setState({ allUsers: updatedUsers });
+        // Save back to localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('toptrades-users', JSON.stringify(updatedUsers));
+        }
       },
 
       addCurrencyPair: (pair) =>
