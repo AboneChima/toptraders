@@ -8,10 +8,22 @@ export default function DepositsTab() {
   const [mounted, setMounted] = useState(false);
   const deposits = useAdminStore((state) => state.deposits);
   const updateDepositStatus = useAdminStore((state) => state.updateDepositStatus);
+  const addDeposit = useAdminStore((state) => state.addDeposit);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    console.log('DepositsTab mounted, deposits count:', deposits.length);
+    console.log('Deposits:', deposits);
+  }, [deposits]);
+
+  const handleTestDeposit = () => {
+    addDeposit({
+      userId: 'test-user',
+      userName: 'Test User',
+      amount: 100,
+      currency: 'USDT',
+    });
+  };
 
   if (!mounted) {
     return <div className="text-white">Loading...</div>;
@@ -22,7 +34,15 @@ export default function DepositsTab() {
       className="rounded-2xl backdrop-blur-xl bg-white/5 border border-white/10 p-6"
       style={{ boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)' }}
     >
-      <h3 className="text-lg font-semibold text-white mb-6">Deposit Requests</h3>
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-semibold text-white">Deposit Requests ({deposits.length})</h3>
+        <button
+          onClick={handleTestDeposit}
+          className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
+        >
+          Add Test Deposit
+        </button>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>

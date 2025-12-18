@@ -28,7 +28,8 @@ export default function TradePanel() {
   const [notificationType, setNotificationType] = useState<'success' | 'error' | 'info'>('info');
 
   const { user, updateUserBalance } = useAuthStore();
-  const { addTrade, updateTrade } = useAdminStore();
+  const addTrade = useAdminStore((state) => state.addTrade);
+  const updateTrade = useAdminStore((state) => state.updateTrade);
 
   const userBalance = user?.balance || 0;
 

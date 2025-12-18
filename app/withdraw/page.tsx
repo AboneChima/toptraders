@@ -19,7 +19,7 @@ const WITHDRAWAL_CONFIG = {
 export default function WithdrawPage() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { addWithdrawal } = useAdminStore();
+  const addWithdrawal = useAdminStore((state) => state.addWithdrawal);
   const [showSideMenu, setShowSideMenu] = useState(false);
   const [amount, setAmount] = useState('');
   const [walletAddress, setWalletAddress] = useState('');

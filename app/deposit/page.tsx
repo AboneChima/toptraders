@@ -20,7 +20,7 @@ const DEPOSIT_ADDRESSES = {
 export default function DepositPage() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { addDeposit } = useAdminStore();
+  const addDeposit = useAdminStore((state) => state.addDeposit);
   const [showSideMenu, setShowSideMenu] = useState(false);
   const [selectedCoin, setSelectedCoin] = useState<string | null>(null);
   const [copiedCoin, setCopiedCoin] = useState<string | null>(null);
