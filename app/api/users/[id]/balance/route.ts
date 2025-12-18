@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { sql } from '@vercel/postgres';
+import { prisma } from '@/lib/prisma';
 
 export async function PATCH(
   request: Request,
@@ -9,26 +9,24 @@ export async function PATCH(
     const { balance } = await request.json();
     const { id } = await params;
 
-    const result = await sql`
-      UPDATE users 
-      SET balance = ${balance} 
-      WHERE id = ${id}
-      RETURNING id, name, email, balance, status
-    `;
+    const user = await prisma.user.update({
+      where: { id: parseInt(id) },
+      data: { balance },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        balance: true,
+        status: true
+      }
+    });
 
-    if (result.rows.length === 0) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({ user: result.rows[0] });
+    return NextResponse.json({ user });
   } catch (error) {
     console.error('Update balance error:', error);
     return NextResponse.json(
-      { error: 'Server error' },
-      { status: 500 }
+      { error: 'User not found' },
+      { status: 404 }
     );
   }
 }

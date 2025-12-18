@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { sql } from '@vercel/postgres';
+import { prisma } from '@/lib/prisma';
 
 export async function DELETE(
   request: Request,
@@ -8,7 +8,9 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    await sql`DELETE FROM users WHERE id = ${id}`;
+    await prisma.user.delete({
+      where: { id: parseInt(id) }
+    });
 
     return NextResponse.json({ message: 'User deleted successfully' });
   } catch (error) {
