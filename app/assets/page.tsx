@@ -33,25 +33,28 @@ export default function AssetsPage() {
       // Load user balance
       const usersResult = await api.getUsers();
       if (usersResult.users) {
-        const currentUser = usersResult.users.find((u: any) => u.id === user.id);
+        const currentUser = usersResult.users.find((u: any) => u.id.toString() === user.id.toString());
         if (currentUser) {
+          console.log('Found user:', currentUser);
           setBalance(currentUser.balance);
           // Update auth store
           useAuthStore.getState().updateUserBalance(user.id, currentUser.balance);
+        } else {
+          console.log('User not found. Looking for:', user.id, 'Available users:', usersResult.users.map((u: any) => u.id));
         }
       }
 
       // Load deposits
       const depositsResult = await api.getDeposits();
       if (depositsResult.deposits) {
-        const userDeposits = depositsResult.deposits.filter((d: any) => d.userId === user.id);
+        const userDeposits = depositsResult.deposits.filter((d: any) => d.userId.toString() === user.id.toString());
         setDeposits(userDeposits);
       }
 
       // Load withdrawals
       const withdrawalsResult = await api.getWithdrawals();
       if (withdrawalsResult.withdrawals) {
-        const userWithdrawals = withdrawalsResult.withdrawals.filter((w: any) => w.userId === user.id);
+        const userWithdrawals = withdrawalsResult.withdrawals.filter((w: any) => w.userId.toString() === user.id.toString());
         setWithdrawals(userWithdrawals);
       }
     } catch (error) {

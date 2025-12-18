@@ -19,7 +19,9 @@ export async function PATCH(
 
     // If confirmed, add to user balance
     if (status === 'confirmed') {
-      await prisma.user.update({
+      console.log('Confirming deposit:', { userId: deposit.userId, amount: deposit.amount });
+      
+      const updatedUser = await prisma.user.update({
         where: { id: deposit.userId },
         data: {
           balance: {
@@ -27,6 +29,8 @@ export async function PATCH(
           }
         }
       });
+      
+      console.log('User balance updated:', { userId: updatedUser.id, newBalance: updatedUser.balance });
     }
 
     return NextResponse.json({ 

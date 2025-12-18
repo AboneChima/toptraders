@@ -27,13 +27,32 @@ export default function TradePanel() {
   const [notificationType, setNotificationType] = useState<'success' | 'error' | 'info'>('info');
 
   const { user, updateUserBalance } = useAuthStore();
-  const userBalance = user?.balance || 0;
+  const [userBalance, setUserBalance] = useState(user?.balance || 0);
 
   useEffect(() => {
     if (user) {
       loadTrades();
+      loadBalance();
+      const interval = setInterval(loadBalance, 3000);
+      return () => clearInterval(interval);
     }
   }, [user]);
+
+  const loadBalance = async () => {
+    if (!user) return;
+    try {
+      const result = await api.getUsers();
+      if (result.users) {
+        const currentUser = result.users.find((u: any) => u.id.toString() === user.id.toString());
+        if (currentUser) {
+          setUserBalance(currentUser.balance);
+          updateUserBalance(user.id, currentUser.balance);
+        }
+      }
+    } catch (error) {
+      console.error('Load balance error:', error);
+    }
+  };
 
   const loadTrades = async () => {
     try {
