@@ -252,7 +252,8 @@ export const useAdminStore = create<AdminState>()(
           if (deposit && status === 'confirmed') {
             // Update user balance in authStore
             const authStore = useAuthStore.getState();
-            const user = authStore.allUsers.find(u => u.id === deposit.userId);
+            const users = authStore.getAllUsers();
+            const user = users.find(u => u.id === deposit.userId);
             if (user) {
               authStore.updateUserBalance(deposit.userId, (user.balance || 0) + deposit.amount);
             }
