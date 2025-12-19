@@ -211,6 +211,8 @@ export default function TradePanel() {
   const leverageOptions = ['1/2', 'X2', 'Max'];
   const durationOptions = ['15s', '30s', '1m', '5m'];
 
+  console.log('TradePanel RENDER:', { userBalance, userId: user?.id, userStoredBalance: user?.balance });
+
   return (
     <div className="bg-gray-900 rounded-t-3xl px-5 py-5 space-y-4">
       <h2 className="text-lg font-semibold text-white">Trade</h2>
