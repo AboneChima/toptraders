@@ -177,10 +177,13 @@ if (typeof window !== 'undefined') {
     fetch('/api/users')
       .then(res => res.json())
       .then(data => {
-        if (data.users) {
+        if (data.users && auth.user) {
           const currentUser = data.users.find((u: any) => u.id.toString() === auth.user?.id.toString());
-          if (currentUser) {
-            const updatedUser = { ...auth.user, balance: currentUser.balance };
+          if (currentUser && auth.user) {
+            const updatedUser: User = { 
+              ...auth.user, 
+              balance: currentUser.balance 
+            };
             useAuthStore.setState({ user: updatedUser });
             saveAuth(updatedUser, true);
           }
