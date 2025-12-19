@@ -30,48 +30,23 @@ export default function TradePanel() {
   const user = useAuthStore((state) => state.user);
   const updateUserBalance = useAuthStore((state) => state.updateUserBalance);
 
-  useEffect(() => {
-    if (user) {
-      console.log('TradePanel: User loaded', { userId: user.id, userBalance: user.balance });
-      // Set initial balance
-      const initialBalance = Number(user.balance) || 0;
-      console.log('TradePanel: Setting initial balance', initialBalance);
-      setUserBalance(initialBalance);
-      loadTrades();
-      loadBalance();
-      
-      // Refresh balance every 2 seconds
-      const interval = setInterval(loadBalance, 2000);
-      return () => clearInterval(interval);
-    } else {
-      console.log('TradePanel: No user found');
-    }
-  }, [user]);
-
   const loadBalance = async () => {
     if (!user) return;
     try {
-      console.log('TradePanel: Loading balance for user', user.id);
       const result = await api.getUsers();
-      console.log('TradePanel: API response', result);
       if (result.users) {
         const currentUser = result.users.find((u: any) => u.id.toString() === user.id.toString());
-        console.log('TradePanel: Found user', currentUser);
         if (currentUser) {
           const newBalance = Number(currentUser.balance) || 0;
-          console.log('TradePanel: New balance', newBalance);
           setUserBalance(newBalance);
           updateUserBalance(user.id, newBalance);
-        } else {
-          console.log('TradePanel: User not found in API response');
         }
       }
     } catch (error) {
-      console.error('TradePanel: Load balance error', error);
       // Fallback to stored balance
-      const fallbackBalance = Number(user.balance) || 0;
-      console.log('TradePanel: Using fallback balance', fallbackBalance);
-      setUserBalance(fallbackBalance);
+      if (user) {
+        setUserBalance(Number(user.balance) || 0);
+      }
     }
   };
 
@@ -98,6 +73,22 @@ export default function TradePanel() {
       console.error('Load trades error:', error);
     }
   };
+
+  useEffect(() => {
+    if (user) {
+      // Set initial balance
+      const initialBalance = Number(user.balance) || 0;
+      setUserBalance(initialBalance);
+      loadTrades();
+      loadBalance();
+      
+      // Refresh balance every 3 seconds
+      const interval = setInterval(() => {
+        loadBalance();
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [user?.id]); // Only re-run if user ID changes
 
   const showMessage = (message: string, type: 'success' | 'error' | 'info') => {
     setNotificationMessage(message);
