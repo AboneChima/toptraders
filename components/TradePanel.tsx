@@ -127,8 +127,17 @@ export default function TradePanel() {
 
     const tradeAmount = parseFloat(amount);
     
-    if (!amount || isNaN(tradeAmount) || tradeAmount < 10) {
-      showMessage('Minimum order amount is $10', 'error');
+    // Debug logging
+    console.log('=== TRADE DEBUG ===');
+    console.log('Amount input:', amount);
+    console.log('Parsed amount:', tradeAmount);
+    console.log('User balance:', userBalance);
+    console.log('Is NaN?:', isNaN(tradeAmount));
+    console.log('Less than 1?:', tradeAmount < 1);
+    console.log('==================');
+    
+    if (!amount || isNaN(tradeAmount) || tradeAmount < 1) {
+      showMessage('Minimum order amount is $1', 'error');
       return;
     }
 
@@ -228,7 +237,7 @@ export default function TradePanel() {
 
       <div className="flex items-center justify-between text-xs">
         <span className="text-gray-400">Available <span className="text-white">${userBalance.toFixed(2)}</span></span>
-        <span className="text-gray-400">Minimum <span className="text-white">$10</span></span>
+        <span className="text-gray-400">Minimum <span className="text-white">$1</span></span>
       </div>
 
       <div className="flex gap-2">
