@@ -25,10 +25,13 @@ export default function TradePanel() {
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
   const [notificationType, setNotificationType] = useState<'success' | 'error' | 'info'>('info');
-  const [userBalance, setUserBalance] = useState(0);
+  const [mounted, setMounted] = useState(false);
 
   const user = useAuthStore((state) => state.user);
   const updateUserBalance = useAuthStore((state) => state.updateUserBalance);
+  
+  // Use user balance directly from store
+  const userBalance = Number(user?.balance) || 0;
 
   const loadBalance = async () => {
     if (!user) return;
@@ -38,15 +41,11 @@ export default function TradePanel() {
         const currentUser = result.users.find((u: any) => u.id.toString() === user.id.toString());
         if (currentUser) {
           const newBalance = Number(currentUser.balance) || 0;
-          setUserBalance(newBalance);
           updateUserBalance(user.id, newBalance);
         }
       }
     } catch (error) {
-      // Fallback to stored balance
-      if (user) {
-        setUserBalance(Number(user.balance) || 0);
-      }
+      console.error('Load balance error:', error);
     }
   };
 
@@ -75,10 +74,8 @@ export default function TradePanel() {
   };
 
   useEffect(() => {
+    setMounted(true);
     if (user) {
-      // Set initial balance
-      const initialBalance = Number(user.balance) || 0;
-      setUserBalance(initialBalance);
       loadTrades();
       loadBalance();
       
@@ -89,6 +86,10 @@ export default function TradePanel() {
       return () => clearInterval(interval);
     }
   }, [user?.id]); // Only re-run if user ID changes
+
+  if (!mounted) {
+    return <div className="bg-gray-900 rounded-t-3xl px-5 py-5"><p className="text-white">Loading...</p></div>;
+  }
 
   const showMessage = (message: string, type: 'success' | 'error' | 'info') => {
     setNotificationMessage(message);
@@ -138,7 +139,6 @@ export default function TradePanel() {
 
     // Deduct balance immediately
     const newBalance = userBalance - tradeAmount;
-    setUserBalance(newBalance);
     updateUserBalance(user.id, newBalance);
 
     const entryPrice = 89446.0 + (Math.random() * 100 - 50);
@@ -189,7 +189,6 @@ export default function TradePanel() {
 
         if (won) {
           const finalBalance = newBalance + tradeAmount + profit;
-          setUserBalance(finalBalance);
           updateUserBalance(user.id, finalBalance);
           showMessage(`Trade Won! +$${profit.toFixed(2)}`, 'success');
         } else {
@@ -203,15 +202,12 @@ export default function TradePanel() {
       console.error('Trade error:', error);
       showMessage('Failed to place trade', 'error');
       // Refund balance
-      setUserBalance(userBalance);
       updateUserBalance(user.id, userBalance);
     }
   };
 
   const leverageOptions = ['1/2', 'X2', 'Max'];
   const durationOptions = ['15s', '30s', '1m', '5m'];
-
-  console.log('TradePanel RENDER:', { userBalance, userId: user?.id, userStoredBalance: user?.balance });
 
   return (
     <div className="bg-gray-900 rounded-t-3xl px-5 py-5 space-y-4">
