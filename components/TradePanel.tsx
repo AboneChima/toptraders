@@ -25,15 +25,20 @@ export default function TradePanel() {
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
   const [notificationType, setNotificationType] = useState<'success' | 'error' | 'info'>('info');
-
-  const { user, updateUserBalance } = useAuthStore();
   const [userBalance, setUserBalance] = useState(0);
+
+  const user = useAuthStore((state) => state.user);
+  const updateUserBalance = useAuthStore((state) => state.updateUserBalance);
 
   useEffect(() => {
     if (user) {
+      // Set initial balance
+      setUserBalance(Number(user.balance) || 0);
       loadTrades();
       loadBalance();
-      const interval = setInterval(loadBalance, 3000);
+      
+      // Refresh balance every 2 seconds
+      const interval = setInterval(loadBalance, 2000);
       return () => clearInterval(interval);
     }
   }, [user]);
@@ -41,21 +46,18 @@ export default function TradePanel() {
   const loadBalance = async () => {
     if (!user) return;
     try {
-      console.log('Loading balance for user:', user.id);
       const result = await api.getUsers();
       if (result.users) {
-        console.log('All users:', result.users);
         const currentUser = result.users.find((u: any) => u.id.toString() === user.id.toString());
         if (currentUser) {
-          console.log('Found user with balance:', currentUser.balance);
-          setUserBalance(currentUser.balance);
-          updateUserBalance(user.id, currentUser.balance);
-        } else {
-          console.log('User not found. Looking for:', user.id);
+          const newBalance = Number(currentUser.balance) || 0;
+          setUserBalance(newBalance);
+          updateUserBalance(user.id, newBalance);
         }
       }
     } catch (error) {
-      console.error('Load balance error:', error);
+      // Fallback to stored balance
+      setUserBalance(Number(user.balance) || 0);
     }
   };
 
@@ -112,9 +114,14 @@ export default function TradePanel() {
   };
 
   const handleTrade = async (direction: 'up' | 'down') => {
+    if (!user) {
+      showMessage('Please login to trade', 'error');
+      return;
+    }
+
     const tradeAmount = parseFloat(amount);
     
-    if (!amount || tradeAmount < 10) {
+    if (!amount || isNaN(tradeAmount) || tradeAmount < 10) {
       showMessage('Minimum order amount is $10', 'error');
       return;
     }
@@ -124,12 +131,10 @@ export default function TradePanel() {
       return;
     }
 
-    if (!user) {
-      showMessage('Please login to trade', 'error');
-      return;
-    }
-
-    updateUserBalance(user.id, userBalance - tradeAmount);
+    // Deduct balance immediately
+    const newBalance = userBalance - tradeAmount;
+    setUserBalance(newBalance);
+    updateUserBalance(user.id, newBalance);
 
     const entryPrice = 89446.0 + (Math.random() * 100 - 50);
     
@@ -178,16 +183,22 @@ export default function TradePanel() {
         ));
 
         if (won) {
-          const newBalance = userBalance - tradeAmount + tradeAmount + profit;
-          updateUserBalance(user.id, newBalance);
+          const finalBalance = newBalance + tradeAmount + profit;
+          setUserBalance(finalBalance);
+          updateUserBalance(user.id, finalBalance);
           showMessage(`Trade Won! +$${profit.toFixed(2)}`, 'success');
         } else {
           showMessage(`Trade Lost: $${Math.abs(profit).toFixed(2)}`, 'error');
         }
+        
+        // Reload balance from database
+        loadBalance();
       }, durationMs);
     } catch (error) {
       console.error('Trade error:', error);
       showMessage('Failed to place trade', 'error');
+      // Refund balance
+      setUserBalance(userBalance);
       updateUserBalance(user.id, userBalance);
     }
   };
