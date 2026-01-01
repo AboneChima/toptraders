@@ -4,18 +4,27 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '@/store/authStore';
 import { LogOut } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function ConnectButton() {
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthStore();
   const [showMenu, setShowMenu] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleLogout = () => {
     logout();
     setShowMenu(false);
     router.push('/');
   };
+
+  if (!mounted) {
+    return null; // Avoid hydration mismatch
+  }
 
   if (isAuthenticated && user) {
     return (

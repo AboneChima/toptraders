@@ -291,6 +291,11 @@ export const useAdminStore = create<AdminState>()(
     }),
     {
       name: 'admin-storage',
+      version: 2, // Increment this to clear old cache
+      partialPersist: (state) => ({
+        isAuthenticated: state.isAuthenticated,
+        // Don't persist currency pairs - always load from database
+      }),
     }
   )
 );
