@@ -125,18 +125,20 @@ export default function TradePanel() {
       return;
     }
 
-    const tradeAmount = parseFloat(amount);
+    const cleanAmount = amount.trim();
+    const tradeAmount = parseFloat(cleanAmount);
     
     // Debug logging
     console.log('=== TRADE DEBUG ===');
     console.log('Amount input:', amount);
+    console.log('Clean amount:', cleanAmount);
     console.log('Parsed amount:', tradeAmount);
     console.log('User balance:', userBalance);
     console.log('Is NaN?:', isNaN(tradeAmount));
     console.log('Less than 1?:', tradeAmount < 1);
     console.log('==================');
     
-    if (!amount || isNaN(tradeAmount) || tradeAmount < 1) {
+    if (!cleanAmount || cleanAmount === '' || isNaN(tradeAmount) || tradeAmount < 1) {
       showMessage('Minimum order amount is $1', 'error');
       return;
     }
@@ -228,10 +230,13 @@ export default function TradePanel() {
         </div>
         <input
           type="number"
+          inputMode="decimal"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           className="flex-1 bg-transparent text-white text-lg outline-none placeholder-gray-500"
           placeholder="0"
+          min="1"
+          step="0.01"
         />
       </div>
 
