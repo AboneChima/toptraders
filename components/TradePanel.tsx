@@ -246,6 +246,39 @@ export default function TradePanel() {
       </div>
 
       <div className="flex gap-2">
+        <button
+          onClick={() => setAmount('10')}
+          className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-white text-xs rounded-lg transition-all"
+        >
+          $10
+        </button>
+        <button
+          onClick={() => setAmount('50')}
+          className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-white text-xs rounded-lg transition-all"
+        >
+          $50
+        </button>
+        <button
+          onClick={() => setAmount('100')}
+          className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-white text-xs rounded-lg transition-all"
+        >
+          $100
+        </button>
+        <button
+          onClick={() => setAmount('500')}
+          className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-white text-xs rounded-lg transition-all"
+        >
+          $500
+        </button>
+        <button
+          onClick={() => setAmount(userBalance.toString())}
+          className="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white text-xs rounded-lg transition-all font-semibold"
+        >
+          All
+        </button>
+      </div>
+
+      <div className="flex gap-2">
         {leverageOptions.map((option) => (
           <button
             key={option}

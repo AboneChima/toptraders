@@ -115,4 +115,35 @@ export const api = {
     });
     return res.json();
   },
+
+  // Currency Pairs
+  getCurrencyPairs: async () => {
+    const res = await fetch(`${API_BASE}/api/currency-pairs`);
+    return res.json();
+  },
+
+  createCurrencyPair: async (data: { name: string; category?: string; icon?: string; description?: string }) => {
+    const res = await fetch(`${API_BASE}/api/currency-pairs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  updateCurrencyPair: async (pairId: number, data: any) => {
+    const res = await fetch(`${API_BASE}/api/currency-pairs/${pairId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  deleteCurrencyPair: async (pairId: number) => {
+    const res = await fetch(`${API_BASE}/api/currency-pairs/${pairId}`, {
+      method: 'DELETE',
+    });
+    return res.json();
+  },
 };

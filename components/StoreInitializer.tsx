@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useAdminStore } from '@/store/adminStore';
+import { api } from '@/lib/api';
 
 // Global flag to prevent multiple initializations
 let isInitialized = false;
@@ -23,34 +24,85 @@ export default function StoreInitializer() {
       return;
     }
 
-    // Only initialize if there are no currency pairs
-    if (currencyPairs.length === 0) {
-      hasInitialized.current = true;
-      isInitialized = true;
+    hasInitialized.current = true;
+    isInitialized = true;
 
+    // Load currency pairs from database
+    const loadCurrencyPairs = async () => {
+      try {
+        const result = await api.getCurrencyPairs();
+        if (result.pairs && result.pairs.length > 0) {
+          // Clear existing pairs and load from database
+          result.pairs.forEach((pair: any) => {
+            addCurrencyPair({
+              id: pair.id,
+              name: pair.name,
+              category: pair.category,
+              price: pair.price,
+              change: pair.change,
+              icon: pair.icon,
+              status: pair.status
+            });
+          });
+        } else {
+          // If no pairs in database, create defaults
+          await initializeDefaultPairs();
+        }
+      } catch (error) {
+        console.error('Failed to load currency pairs:', error);
+        // Fallback to defaults if API fails
+        await initializeDefaultPairs();
+      }
+    };
+
+    const initializeDefaultPairs = async () => {
       const defaultPairs = [
-        { name: 'BTC/USDT', status: true, category: 'USDT' as const, price: 0, change: 0, icon: 'bitcoin' },
-        { name: 'ETH/USDT', status: true, category: 'USDT' as const, price: 0, change: 0, icon: 'eth' },
-        { name: 'XRP/USDT', status: true, category: 'USDT' as const, price: 0, change: 0, icon: 'xrp' },
-        { name: 'DOGE/USDT', status: true, category: 'USDT' as const, price: 0, change: 0, icon: 'doge' },
-        { name: 'ADA/USDT', status: true, category: 'USDT' as const, price: 0, change: 0, icon: 'ada' },
-        { name: 'BCH/USDT', status: true, category: 'USDT' as const, price: 0, change: 0, icon: 'bch' },
-        { name: 'AXS/USDT', status: true, category: 'Web3' as const, price: 0, change: 0, icon: 'axs' },
-        { name: 'ALICE/USDT', status: true, category: 'Web3' as const, price: 0, change: 0, icon: 'alice' },
-        { name: 'SAND/USDT', status: true, category: 'Web3' as const, price: 0, change: 0, icon: 'sand' },
-        { name: 'MANA/USDT', status: true, category: 'Web3' as const, price: 0, change: 0, icon: 'mana' },
-        { name: 'ENJ/USDT', status: true, category: 'Web3' as const, price: 0, change: 0, icon: 'enj' },
-        { name: 'YGG/USDT', status: true, category: 'Web3' as const, price: 0, change: 0, icon: 'ygg' },
-        { name: 'APE/USDT', status: true, category: 'NFT' as const, price: 0, change: 0, icon: 'ape' },
-        { name: 'GMT/USDT', status: true, category: 'NFT' as const, price: 0, change: 0, icon: 'gmt' },
-        { name: 'IMX/USDT', status: true, category: 'NFT' as const, price: 0, change: 0, icon: 'imx' },
-        { name: 'CHR/USDT', status: true, category: 'NFT' as const, price: 0, change: 0, icon: 'chr' },
-        { name: 'OGN/USDT', status: true, category: 'NFT' as const, price: 0, change: 0, icon: 'ogn' },
-        { name: 'CHZ/USDT', status: true, category: 'NFT' as const, price: 0, change: 0, icon: 'chz' },
+        { name: 'BTC/USDT', status: true, category: 'USDT', icon: 'bitcoin' },
+        { name: 'ETH/USDT', status: true, category: 'USDT', icon: 'eth' },
+        { name: 'XRP/USDT', status: true, category: 'USDT', icon: 'xrp' },
+        { name: 'DOGE/USDT', status: true, category: 'USDT', icon: 'doge' },
+        { name: 'ADA/USDT', status: true, category: 'USDT', icon: 'ada' },
+        { name: 'BCH/USDT', status: true, category: 'USDT', icon: 'bch' },
+        { name: 'AXS/USDT', status: true, category: 'Web3', icon: 'axs' },
+        { name: 'ALICE/USDT', status: true, category: 'Web3', icon: 'alice' },
+        { name: 'SAND/USDT', status: true, category: 'Web3', icon: 'sand' },
+        { name: 'MANA/USDT', status: true, category: 'Web3', icon: 'mana' },
+        { name: 'ENJ/USDT', status: true, category: 'Web3', icon: 'enj' },
+        { name: 'YGG/USDT', status: true, category: 'Web3', icon: 'ygg' },
+        { name: 'APE/USDT', status: true, category: 'NFT', icon: 'ape' },
+        { name: 'GMT/USDT', status: true, category: 'NFT', icon: 'gmt' },
+        { name: 'IMX/USDT', status: true, category: 'NFT', icon: 'imx' },
+        { name: 'CHR/USDT', status: true, category: 'NFT', icon: 'chr' },
+        { name: 'OGN/USDT', status: true, category: 'NFT', icon: 'ogn' },
+        { name: 'CHZ/USDT', status: true, category: 'NFT', icon: 'chz' },
       ];
 
-      defaultPairs.forEach(pair => addCurrencyPair(pair));
-    }
+      for (const pair of defaultPairs) {
+        try {
+          await api.createCurrencyPair(pair);
+        } catch (error) {
+          console.error(`Failed to create pair ${pair.name}:`, error);
+        }
+      }
+
+      // Reload after creating defaults
+      const result = await api.getCurrencyPairs();
+      if (result.pairs) {
+        result.pairs.forEach((pair: any) => {
+          addCurrencyPair({
+            id: pair.id,
+            name: pair.name,
+            category: pair.category,
+            price: pair.price,
+            change: pair.change,
+            icon: pair.icon,
+            status: pair.status
+          });
+        });
+      }
+    };
+
+    loadCurrencyPairs();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
 
