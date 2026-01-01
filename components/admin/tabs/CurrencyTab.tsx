@@ -11,9 +11,6 @@ export default function CurrencyTab() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingPair, setEditingPair] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>('');
   const [formData, setFormData] = useState({
     name: '',
     category: 'USDT' as 'USDT' | 'Web3' | 'NFT',
@@ -77,62 +74,13 @@ export default function CurrencyTab() {
       description: pair.description || '',
       status: pair.status,
     });
-    setImageFile(null);
-    setImagePreview('');
     setShowEditModal(true);
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const uploadImage = async (iconName: string): Promise<boolean> => {
-    if (!imageFile) return true; // No image to upload
-
-    setUploadingImage(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', imageFile);
-      formData.append('iconName', iconName);
-
-      const response = await fetch('/api/upload-coin-image', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (response.ok) {
-        return true;
-      } else {
-        alert('Failed to upload image');
-        return false;
-      }
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      alert('Failed to upload image');
-      return false;
-    } finally {
-      setUploadingImage(false);
-    }
   };
 
   const handleUpdatePair = async () => {
     if (!editingPair || !formData.name.trim() || !formData.icon.trim()) return;
 
     try {
-      // Upload image first if provided
-      if (imageFile) {
-        const uploaded = await uploadImage(formData.icon);
-        if (!uploaded) return;
-      }
-
       const response = await fetch(`/api/currency-pairs/${editingPair.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -156,8 +104,6 @@ export default function CurrencyTab() {
 
         setShowEditModal(false);
         setEditingPair(null);
-        setImageFile(null);
-        setImagePreview('');
         setFormData({
           name: '',
           category: 'USDT',
@@ -179,12 +125,6 @@ export default function CurrencyTab() {
   const handleAddPair = async () => {
     if (formData.name.trim() && formData.icon.trim()) {
       try {
-        // Upload image first if provided
-        if (imageFile) {
-          const uploaded = await uploadImage(formData.icon);
-          if (!uploaded) return;
-        }
-
         // Save to database via API
         const response = await fetch('/api/currency-pairs', {
           method: 'POST',
@@ -202,8 +142,9 @@ export default function CurrencyTab() {
         if (response.ok) {
           const { pair } = await response.json();
           
-          // Add to local store
+          // Add to local store with database ID
           addCurrencyPair({
+            ...(pair as any), // Pass the whole object including id
             name: pair.name,
             category: pair.category,
             price: pair.price,
@@ -221,8 +162,6 @@ export default function CurrencyTab() {
             description: '',
             status: true,
           });
-          setImageFile(null);
-          setImagePreview('');
           setShowAddModal(false);
         } else {
           alert('Failed to create currency pair');
@@ -425,24 +364,6 @@ export default function CurrencyTab() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Upload Coin Image (Optional)
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/jpg"
-                    onChange={handleImageChange}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 file:cursor-pointer"
-                  />
-                  {imagePreview && (
-                    <div className="mt-2">
-                      <img src={imagePreview} alt="Preview" className="w-16 h-16 rounded-full object-cover" />
-                    </div>
-                  )}
-                  <p className="text-xs text-gray-500 mt-1">Upload a PNG/JPG image. If not uploaded, first letter will be shown.</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Description (Optional)
                   </label>
                   <textarea
@@ -456,10 +377,9 @@ export default function CurrencyTab() {
 
                 <button
                   onClick={handleAddPair}
-                  disabled={uploadingImage}
-                  className="w-full py-3 bg-white text-black rounded-xl font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-3 bg-white text-black rounded-xl font-semibold hover:bg-gray-200 transition-colors"
                 >
-                  {uploadingImage ? 'Uploading Image...' : 'Create Currency Pair'}
+                  Create Currency Pair
                 </button>
               </div>
             </motion.div>
@@ -535,24 +455,6 @@ export default function CurrencyTab() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Upload New Coin Image (Optional)
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/jpg"
-                    onChange={handleImageChange}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 file:cursor-pointer"
-                  />
-                  {imagePreview && (
-                    <div className="mt-2">
-                      <img src={imagePreview} alt="Preview" className="w-16 h-16 rounded-full object-cover" />
-                    </div>
-                  )}
-                  <p className="text-xs text-gray-500 mt-1">Upload to replace the current image. Leave empty to keep existing.</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Description (Optional)
                   </label>
                   <textarea
@@ -566,10 +468,9 @@ export default function CurrencyTab() {
 
                 <button
                   onClick={handleUpdatePair}
-                  disabled={uploadingImage}
-                  className="w-full py-3 bg-white text-black rounded-xl font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-3 bg-white text-black rounded-xl font-semibold hover:bg-gray-200 transition-colors"
                 >
-                  {uploadingImage ? 'Uploading Image...' : 'Update Currency Pair'}
+                  Update Currency Pair
                 </button>
               </div>
             </motion.div>

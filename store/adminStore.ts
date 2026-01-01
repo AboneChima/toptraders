@@ -151,12 +151,15 @@ export const useAdminStore = create<AdminState>()(
             return state;
           }
           
+          // Use provided ID or generate one
+          const id = (pair as any).id || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          
           return {
             currencyPairs: [
               ...state.currencyPairs,
               {
                 ...pair,
-                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                id,
               },
             ],
           };

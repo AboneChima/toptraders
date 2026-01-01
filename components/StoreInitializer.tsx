@@ -35,9 +35,10 @@ export default function StoreInitializer() {
             }
           });
 
-          // Load from database
+          // Load from database with real IDs
           result.pairs.forEach((pair: any) => {
             addCurrencyPair({
+              ...(pair as any), // Pass the whole object including id
               name: pair.name,
               category: pair.category,
               price: pair.price,
@@ -94,6 +95,7 @@ export default function StoreInitializer() {
       if (result.pairs) {
         result.pairs.forEach((pair: any) => {
           addCurrencyPair({
+            ...(pair as any), // Pass the whole object including id
             name: pair.name,
             category: pair.category,
             price: pair.price,
