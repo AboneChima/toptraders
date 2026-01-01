@@ -14,11 +14,6 @@ export default function StoreInitializer() {
   const hasInitialized = useRef(false);
 
   useEffect(() => {
-    // First, remove any existing duplicates
-    if (currencyPairs.length > 0) {
-      removeDuplicatePairs();
-    }
-
     // Prevent multiple initializations using both global flag and ref
     if (hasInitialized.current || isInitialized) {
       return;
@@ -32,7 +27,15 @@ export default function StoreInitializer() {
       try {
         const result = await api.getCurrencyPairs();
         if (result.pairs && result.pairs.length > 0) {
-          // Clear existing pairs and load from database
+          // Clear existing pairs first
+          const store = useAdminStore.getState();
+          store.currencyPairs.forEach(pair => {
+            if (pair.id) {
+              store.deleteCurrencyPair(pair.id);
+            }
+          });
+
+          // Load from database
           result.pairs.forEach((pair: any) => {
             addCurrencyPair({
               name: pair.name,
@@ -50,7 +53,9 @@ export default function StoreInitializer() {
       } catch (error) {
         console.error('Failed to load currency pairs:', error);
         // Fallback to defaults if API fails
-        await initializeDefaultPairs();
+        if (currencyPairs.length === 0) {
+          await initializeDefaultPairs();
+        }
       }
     };
 
