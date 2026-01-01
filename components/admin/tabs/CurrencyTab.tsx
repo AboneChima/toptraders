@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import { useAdminStore } from '@/store/adminStore';
-import { Plus, Trash2, X } from 'lucide-react';
+import { Plus, Trash2, X, Edit } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function CurrencyTab() {
-  const { currencyPairs, addCurrencyPair, toggleCurrencyPair, deleteCurrencyPair } = useAdminStore();
+  const { currencyPairs, addCurrencyPair, toggleCurrencyPair, deleteCurrencyPair, updateCurrencyPair } = useAdminStore();
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingPair, setEditingPair] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
     name: '',
@@ -58,6 +60,65 @@ export default function CurrencyTab() {
       }
     } catch (error) {
       console.error('Error deleting currency pair:', error);
+    }
+  };
+
+  const handleEditPair = (pair: any) => {
+    setEditingPair(pair);
+    setFormData({
+      name: pair.name,
+      category: pair.category,
+      price: pair.price,
+      change: pair.change,
+      icon: pair.icon,
+      description: pair.description || '',
+      status: pair.status,
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdatePair = async () => {
+    if (!editingPair || !formData.name.trim() || !formData.icon.trim()) return;
+
+    try {
+      const response = await fetch(`/api/currency-pairs/${editingPair.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          category: formData.category,
+          icon: formData.icon,
+          description: formData.description,
+          status: formData.status,
+        }),
+      });
+
+      if (response.ok) {
+        const { pair } = await response.json();
+        updateCurrencyPair(editingPair.id, {
+          name: pair.name,
+          category: pair.category,
+          icon: pair.icon,
+          status: pair.status,
+        });
+
+        setShowEditModal(false);
+        setEditingPair(null);
+        setFormData({
+          name: '',
+          category: 'USDT',
+          price: 0,
+          change: 0,
+          icon: '',
+          description: '',
+          status: true,
+        });
+      } else {
+        alert('Failed to update currency pair');
+      }
+    } catch (error) {
+      console.error('Error updating currency pair:', error);
+      alert('Failed to update currency pair');
     }
   };
 
@@ -144,7 +205,7 @@ export default function CurrencyTab() {
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">CATEGORY</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">PRICE</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">STATUS</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">ACTION</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">ACTIONS</th>
               </tr>
             </thead>
             <tbody>
@@ -174,12 +235,20 @@ export default function CurrencyTab() {
                     </label>
                   </td>
                   <td className="py-3 px-4">
-                    <button
-                      onClick={() => handleDeletePair(pair.id)}
-                      className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleEditPair(pair)}
+                        className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeletePair(pair.id)}
+                        className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -314,6 +383,98 @@ export default function CurrencyTab() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Edit Pair Modal */}
+      <AnimatePresence>
+        {showEditModal && editingPair && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-md rounded-2xl backdrop-blur-xl bg-white/10 border border-white/20 p-6"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-white">Edit Currency Pair</h3>
+                <button onClick={() => setShowEditModal(false)} className="p-2 hover:bg-white/10 rounded-lg">
+                  <X className="w-5 h-5 text-white" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Currency Pair Name *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g., BTC/USDT, ETH/USDT"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 outline-none focus:border-white/30"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Category *
+                  </label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value as 'USDT' | 'Web3' | 'NFT' })}
+                    className="w-full px-4 py-3 bg-gray-900 border border-white/10 rounded-xl text-white outline-none focus:border-white/30 cursor-pointer"
+                    style={{ 
+                      appearance: 'none',
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'right 1rem center',
+                      paddingRight: '3rem'
+                    }}
+                  >
+                    <option value="USDT" style={{ backgroundColor: '#111', color: 'white' }}>USDT (Main Pairs)</option>
+                    <option value="Web3" style={{ backgroundColor: '#111', color: 'white' }}>Web3 (Gaming/Metaverse)</option>
+                    <option value="NFT" style={{ backgroundColor: '#111', color: 'white' }}>NFT (NFT Tokens)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Icon Name *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g., bitcoin, eth, doge"
+                    value={formData.icon}
+                    onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 outline-none focus:border-white/30"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Must match the coin image filename in /public/coins folder. If image doesn't exist, first letter will be shown.</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Description (Optional)
+                  </label>
+                  <textarea
+                    placeholder="Brief description of this currency pair"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={3}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 outline-none focus:border-white/30 resize-none"
+                  />
+                </div>
+
+                <button
+                  onClick={handleUpdatePair}
+                  className="w-full py-3 bg-white text-black rounded-xl font-semibold hover:bg-gray-200 transition-colors"
+                >
+                  Update Currency Pair
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { TrendingDown, TrendingUp } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAdminStore } from '@/store/adminStore';
+import CoinAvatar from './CoinAvatar';
 
 type MarketTab = 'USDT' | 'Web3' | 'NFT';
 
@@ -88,13 +89,7 @@ export default function MarketSection() {
             >
               <div className="flex items-center gap-3">
                 {/* Icon */}
-                <Image
-                  src={`/coins/${pair.icon}.png`}
-                  alt={pair.name}
-                  width={40}
-                  height={40}
-                  className="rounded-full"
-                />
+                <CoinAvatar icon={pair.icon} name={pair.name} size={40} />
                 
                 {/* Pair Info */}
                 <div>

@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { X, TrendingUp, TrendingDown } from 'lucide-react';
 import Image from 'next/image';
 import { useAdminStore } from '@/store/adminStore';
+import CoinAvatar from './CoinAvatar';
 
 interface Currency {
   symbol: string;
@@ -102,13 +103,7 @@ export default function CurrencyModal({ onClose, onSelect }: CurrencyModalProps)
               className="w-full flex items-center justify-between py-4 border-b border-gray-800 hover:bg-gray-800 transition-colors rounded-lg px-2"
             >
               <div className="flex items-center gap-3">
-                <Image
-                  src={`/coins/${currency.icon}.png`}
-                  alt={currency.name}
-                  width={40}
-                  height={40}
-                  className="rounded-full"
-                />
+                <CoinAvatar icon={currency.icon} name={currency.name} size={40} />
                 <div className="text-left">
                   <div className="font-semibold text-white text-base">{currency.pair}</div>
                   <div className="text-sm text-gray-400">{currency.name}</div>
