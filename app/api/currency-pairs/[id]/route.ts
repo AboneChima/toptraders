@@ -3,14 +3,15 @@ import { prisma } from '@/lib/prisma';
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const { id } = await params;
+    const parsedId = parseInt(id);
     const updates = await request.json();
 
     const pair = await prisma.currencyPair.update({
-      where: { id },
+      where: { id: parsedId },
       data: {
         ...(updates.name !== undefined && { name: updates.name }),
         ...(updates.category !== undefined && { category: updates.category }),
@@ -47,12 +48,13 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const { id } = await params;
+    const parsedId = parseInt(id);
     await prisma.currencyPair.delete({
-      where: { id }
+      where: { id: parsedId }
     });
 
     return NextResponse.json({ success: true });
