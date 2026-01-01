@@ -31,14 +31,14 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { name, category, icon, description } = await request.json();
+    const { name, category, icon, description, price, change } = await request.json();
 
     const pair = await prisma.currencyPair.create({
       data: {
         name,
         category: category || 'USDT',
-        price: 0,
-        change: 0,
+        price: price || 0,
+        change: change || 0,
         icon: icon || '',
         description: description || '',
         status: true
