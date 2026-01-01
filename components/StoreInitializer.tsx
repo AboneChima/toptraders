@@ -35,7 +35,6 @@ export default function StoreInitializer() {
           // Clear existing pairs and load from database
           result.pairs.forEach((pair: any) => {
             addCurrencyPair({
-              id: pair.id,
               name: pair.name,
               category: pair.category,
               price: pair.price,
@@ -90,7 +89,6 @@ export default function StoreInitializer() {
       if (result.pairs) {
         result.pairs.forEach((pair: any) => {
           addCurrencyPair({
-            id: pair.id,
             name: pair.name,
             category: pair.category,
             price: pair.price,
