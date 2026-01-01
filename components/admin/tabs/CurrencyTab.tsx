@@ -26,19 +26,86 @@ export default function CurrencyTab() {
     pair.icon.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleAddPair = () => {
-    if (formData.name.trim() && formData.icon.trim()) {
-      addCurrencyPair(formData);
-      setFormData({
-        name: '',
-        category: 'USDT',
-        price: 0,
-        change: 0,
-        icon: '',
-        description: '',
-        status: true,
+  const handleTogglePair = async (pairId: string) => {
+    const pair = currencyPairs.find(p => p.id === pairId);
+    if (!pair) return;
+
+    try {
+      const response = await fetch(`/api/currency-pairs/${pairId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: !pair.status }),
       });
-      setShowAddModal(false);
+
+      if (response.ok) {
+        toggleCurrencyPair(pairId);
+      }
+    } catch (error) {
+      console.error('Error toggling currency pair:', error);
+    }
+  };
+
+  const handleDeletePair = async (pairId: string) => {
+    if (!confirm('Are you sure you want to delete this currency pair?')) return;
+
+    try {
+      const response = await fetch(`/api/currency-pairs/${pairId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        deleteCurrencyPair(pairId);
+      }
+    } catch (error) {
+      console.error('Error deleting currency pair:', error);
+    }
+  };
+
+  const handleAddPair = async () => {
+    if (formData.name.trim() && formData.icon.trim()) {
+      try {
+        // Save to database via API
+        const response = await fetch('/api/currency-pairs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: formData.name,
+            category: formData.category,
+            icon: formData.icon,
+            description: formData.description,
+          }),
+        });
+
+        if (response.ok) {
+          const { pair } = await response.json();
+          
+          // Add to local store
+          addCurrencyPair({
+            name: pair.name,
+            category: pair.category,
+            price: pair.price,
+            change: pair.change,
+            icon: pair.icon,
+            status: pair.status,
+          });
+
+          setFormData({
+            name: '',
+            category: 'USDT',
+            price: 0,
+            change: 0,
+            icon: '',
+            description: '',
+            status: true,
+          });
+          setShowAddModal(false);
+        } else {
+          alert('Failed to create currency pair');
+        }
+      } catch (error) {
+        console.error('Error creating currency pair:', error);
+        alert('Failed to create currency pair');
+      }
     }
   };
 
@@ -100,7 +167,7 @@ export default function CurrencyTab() {
                       <input
                         type="checkbox"
                         checked={pair.status}
-                        onChange={() => toggleCurrencyPair(pair.id)}
+                        onChange={() => handleTogglePair(pair.id)}
                         className="sr-only peer"
                       />
                       <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -108,7 +175,7 @@ export default function CurrencyTab() {
                   </td>
                   <td className="py-3 px-4">
                     <button
-                      onClick={() => deleteCurrencyPair(pair.id)}
+                      onClick={() => handleDeletePair(pair.id)}
                       className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg"
                     >
                       <Trash2 className="w-4 h-4" />
